@@ -1,0 +1,154 @@
+{
+    "Apple Developer": {
+        "errorType": "status_code",
+        "url": "https://developer.apple.com/forums/profile/{}",
+        "urlMain": "https://developer.apple.com",
+        "confidence": 3,
+        "tags": ["tech", "dev"]
+    },
+
+    "Apple Discussions": {
+        "errorMsg": "Looking for something in Apple Support Communities?",
+        "errorType": "message",
+        "url": "https://discussions.apple.com/profile/{}",
+        "urlMain": "https://discussions.apple.com",
+        "confidence": 3,
+        "tags": ["tech", "dev"]
+    },
+
+    "Bluesky": {
+        "errorType": "status_code",
+        "url": "https://bsky.app/profile/{}.bsky.social",
+        "urlProbe": "https://public.api.bsky.app/xrpc/app.bsky.actor.getProfile?actor={}.bsky.social",
+        "confidence": 3,
+        "tags": ["social"]
+    },
+
+    "Dev.to": {
+        "url": "https://dev.to/{}",
+        "errorType": "status_code",
+        "confidence": 85,
+        "tags": ["tech"]
+    },
+
+    "Discord": {
+        "responseType": "json",
+        "url": "https://discord.com",
+        "urlMain": "https://discord.com/",
+        "urlProbe": "https://discord.com/api/v9/unique-username/username-attempt-unauthed",
+        "responsesSuccess": [{"taken": true}],
+        "responsesError":  [{"taken": false}], 
+        "responsesRetry": [{"message": "The resource is being rate limited"}, {"message": "retry"}],
+        "requestMethod": "POST",
+        "requestPayload": {
+        "username": "{}"
+        },
+        "headers": {
+        "Content-Type": "application/json"
+        }
+    },
+
+    "Discord.bio": {
+        "errorType": "html",
+        "responseError": "<title>Server Error (500)</title>",
+        "url": "https://discords.com/api-v2/bio/details/{}",
+        "urlMain": "https://discord.bio/"
+    },
+
+    "GitHub": {
+      "url": "https://github.com/{}",
+      "errorType": "status_code",
+      "regexCheck": "^[a-zA-Z0-9-]{1,39}$",
+      "confidence": 3,
+      "tags": ["tech"]
+    },
+  
+    "Google Play": {
+        "errorMsg": "the requested URL was not found on this server",
+        "errorType": "message",
+        "url": "https://play.google.com/store/apps/developer?id={}",
+        "urlMain": "https://play.google.com",
+        "username_claimed": "GitHub"
+    },
+ 
+    "HackTheBox": {
+        "errorType": "status_code",
+        "url": "https://forum.hackthebox.com/u/{}",
+        "confidence": 2,
+        "tags": ["tech", "hack"]
+    },
+
+    "Hugging Face": {
+        "url": "https://huggingface.co/{}",
+        "errorType": "status_code",
+        "confidence": 3,
+        "tags": ["tech", "ai"]
+    },
+
+    "Keybase": {
+        "url": "https://keybase.io/{}",
+        "errorType": "status_code",
+        "confidence": 3,
+        "tags": ["tech", "security"]
+    },
+    
+    "Mastodon": {
+      "url": "https://mastodon.social/@{}",
+      "errorType": "status_code",
+      "confidence": 3,
+      "tags": ["social"]
+    },
+
+    "Medium": {
+      "url": "https://medium.com/@{}",
+      "urlProbe": "https://medium.com/feed/@{}",
+      "errorType": "status_code",
+      "confidence": 3,
+      "tags": ["media", "culture"]
+    },
+  
+    "Reddit": {
+      "url": "https://www.reddit.com/user/{}",
+      "urlProbe": "https://www.reddit.com/user/{}/about.json",
+      "responseType": "json",
+      "responsesError": [{"error": 404}],
+      "confidence": 3,
+      "tags": ["social", "culture"]
+    },
+
+    "TryHackMe": {
+      "url": "https://tryhackme.com/p/{}",
+      "urlProbe": "https://tryhackme.com/api/user/exist/{}",
+      "regexCheck": "^[a-zA-Z0-9.]{1,16}$",
+      "responseType": "json",
+      "responsesSuccess": [{"success": true}],
+      "responsesError": [{"success": false}],
+      "confidence": 2,
+      "tags": ["tech", "cyber"]
+    },
+    
+    "Twitch": {
+        "url": "https://www.twitch.tv/{}",
+        "scanMode": "deep",
+        "responseType": "html",
+        "responseError": [
+        "Sorry. Unless you've got a time machine, that content is unavailable.",
+        "this channel is unavailable",
+        "page not found"
+        ],
+        "positiveSelectors": [
+            "meta[property='og:title']",
+            "button:has-text('Follow')"
+        ],
+        "confidence": 2,
+        "tags": ["social", "media", "culture"]
+    },
+
+    "YouTube": {
+      "url": "https://www.youtube.com/@{}",
+      "errorType": "status_code",
+      "confidence": 3,
+      "tags": ["social", "media", "culture"]
+    }
+  
+}
