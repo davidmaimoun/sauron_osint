@@ -2,7 +2,6 @@
 import asyncio
 import argparse
 import json
-import re
 import datetime
 import os
 from collections import Counter, defaultdict
@@ -25,7 +24,16 @@ class Level:
     LOW     = 'low'
     RETRY   = 'retry'
 
+class Status:
+    GOOD      = "good"
+    BAD       = "bad"
+    FORBIDDEN = "forbidden"
+    REDIRECT  = "redirect"
+    UNKNOWN   = "unknown"
+
+DATA_JSON = 'data.json'
 KEY_USERNAME = 'username'
+KEY_NAME      = 'name'
 KEY_USERNAMES_PROBABLES = 'usernames_probables'
 KEY_PLATFORM = 'platform'
 KEY_MESSAGE    = 'message'
@@ -57,7 +65,7 @@ def out_results(results: dict):
             continue
         out(f"\n{Colors.CYAN}[{key.upper()}]{Colors.RESET}  Found {len(val)} items!\n", bold=True)
         
-        if key == KEY_USERNAME or key == KEY_USERNAMES_PROBABLES:
+        if key == KEY_USERNAME or key == KEY_NAME:
             if val:  
                 platform_width = max(len(str(v[KEY_PLATFORM])) for v in val) + 2
                 level_width = max(len(str(v[KEY_LEVEL])) for v in val) + 2 
@@ -102,6 +110,25 @@ def derive_usernames(email: str):
 
 def generate_username(name: str):
     return name.replace(" ", "").lower()
+
+def map_status_code(status_code: int) -> Status:
+    """
+    Map HTTP status code to internal Status
+    """
+
+    if status_code in (200, 201, 202):
+        return Status.GOOD
+
+    if status_code in (301, 302, 307, 308):
+        return Status.REDIRECT
+
+    if status_code in (401, 403):
+        return Status.FORBIDDEN
+
+    if status_code == 404:
+        return Status.BAD
+
+    return Status.UNKNOWN
 
 def get_confidence_level(conf):
     if conf == -1:
@@ -154,6 +181,23 @@ def match_any(response_data: dict, patterns: list[dict]) -> bool:
 
     return False
 
+def match_text_errors(text: str, patterns: list) -> bool:
+    text = text.lower()
+
+    for p in patterns:
+        # simple string
+        if isinstance(p, str):
+            if p.lower() in text:
+                return True
+
+        # dict pattern (future-proof)
+        elif isinstance(p, dict):
+            for v in p.values():
+                if isinstance(v, str) and v.lower() in text:
+                    return True
+
+    return False
+
 def extract_retry_message(response_data: dict, patterns: list[dict]) -> str | None:
     """
     Return the REAL retry message from response_data
@@ -195,205 +239,189 @@ def get_help():
         )
 
 # ================= LOAD SITES =================
-def load_sites():
-    with open("data_test.json", "r", encoding="utf-8") as f:
-        return json.load(f)
-
-
-# ================= PLAYWRIGHT DEEP CHECK =================
-async def check_platform_deep(platform_name: str, url:str, username: str, platform_config: dict, level, timeout: int = 15000):
+def load_data(input_type: str | None = None) -> dict:
     """
-    Deep check using Playwright for any platform.
-    
-    platform_config should include:
-    - url: str, the URL with {} placeholder for username
-    - responseError: list[str], negative markers in rendered page
-    - positiveSelectors: list[str] (optional), CSS/XPath selectors indicating existence
-    - confidence: int
+    Load site definitions from JSON and optionally filter by input_type.
+    If a site has no 'inputType', it defaults to 'username'.
+    :param input_type: "username", "email", "name", etc.
+    :return: dict of sites matching the input_type (or all if None)
     """
-    try:
-        from playwright.async_api import async_playwright
-    except ImportError:
-        out(f"[!] Deep mode requested but Playwright is not installed. Skipping {platform_name}.", Colors.YELLOW)
-        return None
+    with open(DATA_JSON, "r", encoding="utf-8") as f:
+        sites = json.load(f)
 
-    negative_markers = [m.lower() for m in platform_config.get("responseError", [])]
-    positive_selectors = platform_config.get("positiveSelectors", [])
-    level = get_confidence_level(level)
-    try:
-        async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True)
-            page = await browser.new_page(
-                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                           "AppleWebKit/537.36 (KHTML, like Gecko) "
-                           "Chrome/120.0 Safari/537.36"
-            )
+    if input_type:
+        # Filter sites where 'inputType' matches, default to 'username' if missing
+        filtered = {
+            site_name: cfg
+            for site_name, cfg in sites.items()
+            if cfg.get("inputType", "username") == input_type
+        }
+        return filtered
 
-            try:
-                await page.goto(url, wait_until="domcontentloaded", timeout=timeout)
-                await page.wait_for_timeout(3000) 
-
-                content = (await page.content()).lower()
-                title = (await page.title()).lower()
-
-                
-                for marker in negative_markers:
-                    if marker in content or marker in title:
-                        await browser.close()
-                        return None
-
-                for selector in positive_selectors:
-                    if await page.locator(selector).count() > 0:
-                        await browser.close()
-                        return {
-                            "found": True,
-                            "platform": platform_name,
-                            "username": username,
-                            "url": url,
-                            "level": level,
-                            "method": "deep-js-selector"
-                        }
-
-                if username.lower() in title:
-                    await browser.close()
-                    return {
-                        "found": True,
-                        "platform": platform_name,
-                        "username": username,
-                        "url": url,
-                        "level": level,
-                        "method": "deep-js-title"
-                    }
-
-                if username.lower() in content:
-                    await browser.close()
-                    return {
-                        "found": True,
-                        "platform": platform_name,
-                        "username": username,
-                        "url": url,
-                        "level": level,
-                        "method": "deep-js-content"
-                    }
-
-            except Exception as e:
-                out(f"[!] Deep check failed for {platform_name}: {e}", Colors.YELLOW)
-
-            await browser.close()
-
-    except Exception:
-        out(f"[!] Chromium not installed or failed to launch. Skipping {platform_name}.", Colors.RED)
-
-    return None
+    return sites
 
 
 # ================= CHECK ENGINE =================
-async def check_site(site_name, site_cfg, username, deep=False):
-    if site_cfg.get("force_lowercase"):
-        username = username.lower()
 
-    url_display = site_cfg["url"].format(username)
-    url_probe = site_cfg.get("urlProbe", site_cfg["url"]).format(username)
-    scan_mode = site_cfg.get("scanMode", "")
-    response_type = site_cfg.get("responseType", "")
-    responses_error = site_cfg.get("responseError", [])
+async def fetch(site_cfg, url, payload=None, deep=False, timeout=15000):
+    headers = site_cfg.get("headers", {'User-Agent': 'Mozilla/5.0'})
+    method = site_cfg.get("requestMethod", "GET").upper()
+
+    # ===== DEEP (Playwright) =====
+    if deep:
+        from playwright.async_api import async_playwright
+
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=True)
+            page = await browser.new_page(user_agent=headers.get("User-Agent"))
+
+            response = await page.goto(url, wait_until="domcontentloaded", timeout=timeout)
+            await page.wait_for_timeout(3000)
+
+            result = {
+                "status": response.status if response else None,
+                "text": (await page.content()).lower(),
+                "title": (await page.title()).lower(),
+                "json": None,
+                "page": page
+            }
+
+            await browser.close()
+            return result
+
+    # ===== NORMAL (HTTPX) =====
+    async with httpx.AsyncClient(timeout=10, headers=headers, follow_redirects=True) as client:
+        if method == "POST" and payload:
+            r = await client.post(url, json=payload)
+        else:
+            r = await client.get(url)
+
+        try:
+            data = r.json()
+        except Exception:
+            data = None
+
+        return {
+            "status": r.status_code,
+            "text": r.text.lower(),
+            "title": "",
+            "json": data,
+            "page": None
+        }
+
+def analyze_response(
+    site_name,
+    site_cfg,
+    username,
+    url_display,
+    response,
+    conf
+):
+    response_type = site_cfg.get("responseType")
+    responses_error = site_cfg.get("responsesError", [])
+    responses_success = site_cfg.get("responsesSuccess", [])
     responses_retry = site_cfg.get("responsesRetry", [])
-    responses_success = site_cfg.get("responseSuccess", [])
-    regex_check = site_cfg.get("regexCheck")
-    conf = site_cfg.get("confidence", 1)
-    request_method = site_cfg.get("requestMethod", "GET").upper()
-    request_payload = site_cfg.get("requestPayload")
 
-    if regex_check and not re.match(regex_check, username):
+    status = map_status_code(response["status"])
+
+    # ===== STATUS HANDLING =====
+    if status == Status.BAD:
         return None
 
-    # ===== DEEP PLAYWRIGHT CHECK =====
-    if scan_mode == "deep" and deep:
-        return await check_platform_deep(
-            platform_name=site_name,
-            username=username,
-            url=url_probe,
-            platform_config=site_cfg,
-            level=conf
-        )
-
-    # ===== NORMAL HTTPX CHECK =====
-    try:
-        async with httpx.AsyncClient(timeout=10, headers={'User-Agent': 'Mozilla/5.0'}, follow_redirects=True) as client:
-            if request_method == "POST" and request_payload:
-                # remplacer le {} par le username dans le payload
-                payload = {k: v.format(username) if isinstance(v, str) else v
-                           for k, v in request_payload.items()}
-                r = await client.post(url_probe, json=payload, headers=site_cfg.get("headers", {}))
-            else:
-                r = await client.get(url_probe, headers=site_cfg.get("headers", {}))
-
-
-        
-        # ===== RESPONSE CHECK =====
-        if response_type == "status_code":
-            valid_codes = site_cfg.get("validStatus", [200])
-            if isinstance(valid_codes, int):
-                valid_codes = [valid_codes]
-            if r.status_code not in valid_codes:
-                return None
-
-        elif response_type == "json":
-            try:
-                data = r.json()  
-            except Exception:
-                return None
-            
-            if responses_retry and match_any(data, responses_retry):
-                retry_message = extract_retry_message(
-                    response_data=data,
-                    patterns=responses_retry
-                ) or "temporary error, retry later"
-                
-                return {
-                    "platform": site_name,
-                    "username": username,
-                    "message":data,
-                    "level": 'retry',
-                    "confidence": -1,
-                    "tags": []
-                }
-
-            if responses_error and match_any(data, responses_error):
-                return None
-
-            if responses_success and not match_any(data, responses_success):
-                return None
-
-        elif response_type == "message" or response_type == "html":
-            text = r.text.lower()
-
-            for err in responses_error:
-                for v in err.values():
-                    if isinstance(v, str) and v.lower() in text:
-                        return None
-          
-        else:
-            return None
-
-
+    if status == Status.FORBIDDEN:
         return {
             "platform": site_name,
             "username": username,
-            "message": url_display,
-            "level": get_confidence_level(conf),
-            "confidence": conf,
+            "message": "access forbidden - this may indicate that the user exists",
+            "level": "forbidden",
+            "confidence": 1,
             "tags": site_cfg.get("tags", [])
         }
 
-    except Exception:
-        return None
+    # ===== JSON =====
+    if response_type == "json" and response["json"]:
+        data = response["json"]
 
+        if responses_retry and match_any(data, responses_retry):
+            return {
+                "platform": site_name,
+                "username": username,
+                "message": extract_retry_message(data, responses_retry),
+                "level": "retry",
+                "confidence": -1,
+                "tags": []
+            }
+
+        if responses_error and match_any(data, responses_error):
+            return None
+
+        if responses_success and not match_any(data, responses_success):
+            return None
+
+    # ===== HTML / MESSAGE =====
+    if response_type in ("html", "message"):
+        text = response["text"]
+        title = response["title"]
+
+        if responses_error and match_text_errors(text, responses_error):
+            return None
+
+        if username.lower() in text or username.lower() in title:
+            return {
+                "platform": site_name,
+                "username": username,
+                "message": url_display,
+                "level": get_confidence_level(conf),
+                "confidence": conf,
+                "tags": site_cfg.get("tags", [])
+            }
+
+    return {
+        "platform": site_name,
+        "username": username,
+        "message": url_display,
+        "level": get_confidence_level(conf),
+        "confidence": conf,
+        "tags": site_cfg.get("tags", [])
+    }
+
+async def check_site(site_name, site_cfg, username=None, name=None, deep=False):
+    conf = site_cfg.get("confidence", 1)
+
+    if username:
+        url = site_cfg["url"].format(username)
+        payload = site_cfg.get("requestPayload")
+        if payload:
+            payload = {k: v.format(username) for k, v in payload.items()}
+    else:
+        fn, ln = name.split(" ", 1)
+        url = site_cfg["url"].format(fn, ln)
+        payload = None
+        username = name
+
+    response = await fetch(
+        site_cfg=site_cfg,
+        url=url,
+        payload=payload,
+        deep=deep and site_cfg.get("scanMode") == "deep"
+    )
+
+    return analyze_response(
+        site_name=site_name,
+        site_cfg=site_cfg,
+        username=username,
+        url_display=url,
+        response=response,
+        conf=conf
+    )
 
 # =================  SCAN  ====================
-async def scan_username(username, deep=False):
-    sites = load_sites()
-    tasks = [check_site(site, cfg, username, deep=deep) for site, cfg in sites.items()]
+async def scan(input_type, input_val, deep=False):
+    sites = load_data(input_type)
+    if input_type == "username":
+        tasks = [check_site(site, cfg, username=input_val, name=None, deep=deep) for site, cfg in sites.items()]
+    elif input_type == "name":
+        tasks = [check_site(site, cfg, username=None, name=input_val, deep=deep) for site, cfg in sites.items()]
 
     results = await asyncio.gather(*tasks)
 
@@ -402,18 +430,14 @@ async def scan_username(username, deep=False):
 
 async def generate_and_scan(username=None, email=None, name=None, deep=False):
     results = {}
+    
     if username:
-        results["username"] = await scan_username(username, deep=deep)
-    else:
-        generated = []
-        if name:
-            generated.append(generate_username(name))
-        if email:
-            generated.extend(derive_usernames(email))
-        results["usernames_probables"] = []
-        for u in generated:
-            res = await scan_username(u, deep=deep)
-            results["usernames_probables"].extend(res)
+        out(f"Scan required for the username: {Colors.BLUE}{username}{Colors.RESET}")
+        results["username"] = await scan('username', username, deep=deep)
+    
+    if name:
+        out(f"Scan required for the name: {Colors.BLUE}{name}{Colors.RESET}")
+        results["name"] = await scan('name', name, deep=deep)
     return results
 
 
