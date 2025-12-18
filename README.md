@@ -61,21 +61,27 @@ This design makes Sauron **easy to maintain and extend** without touching core l
 
 ### Python dependencies
 ```bash
-pip install httpx playwright
+pip install httpx
+```
+For ```--deep``` mode:
+```pip install playwright
 playwright install chromium
 ```
 
 ## 🚀 Usage
 Scan a username
-python sauron.py --username johndoe
+```python sauron.py --username johndoe```
 
 Scan using email (derive possible usernames)
-python sauron.py --email john.doe@example.com
+
+```python sauron.py --email john.doe@example.com```
 
 Scan using full name
-python sauron.py --name "John Doe"
+
+```python sauron.py --name "John Doe"```
 
 Enable deep scan mode
+
 ```python sauron.py --username johndoe --deep```
 
 ## 📊 Output
