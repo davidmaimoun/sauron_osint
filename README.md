@@ -68,8 +68,9 @@ For ```--deep``` mode:
 playwright install chromium
 ```
 
-## 🚀 Usage
+## 🚀 Usage (For this version, only the username works well)
 Scan a username
+
 ```python sauron.py --username johndoe```
 
 Scan using email (derive possible usernames)
