@@ -58,6 +58,22 @@ ERROR_LEXICON = [
     "no such account"
 ]
 
+DEFAULT_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/142.0.0.0 Safari/537.36"
+    ),
+    "Accept": (
+        "text/html,application/xhtml+xml,application/xml;"
+        "q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8"
+    ),
+    "Accept-Language": "en-GB,en;q=0.9",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Connection": "keep-alive",
+    "Upgrade-Insecure-Requests": "1",
+}
+
 NOT_FOUND_SITES = set()
 
 # ================= LOGGING =================
@@ -217,6 +233,19 @@ def extract_retry_message(response_data: dict, patterns: list[dict]) -> str | No
 
     return None
 
+def build_headers(site_cfg: dict) -> dict:
+    """
+    Merge DEFAULT_HEADERS with site-specific headers
+    Site headers override defaults
+    """
+    headers = DEFAULT_HEADERS.copy()
+    site_headers = site_cfg.get("headers", {})
+
+    if site_headers:
+        headers.update(site_headers)
+
+    return headers
+
 def get_disclaimer():
     return  (
         "[! Disclaimer]\n"
@@ -262,11 +291,13 @@ def load_data(data, input_type: str | None = None) -> dict:
 
 async def fetch(site_cfg, url, payload=None, deep=False, timeout=15000):
     method = site_cfg.get("requestMethod", "GET").upper()
-    headers = site_cfg.get("headers", {'User-Agent': 'Mozilla/5.0'})
+    # headers = site_cfg.get("headers", {'User-Agent': 'Mozilla/5.0'})
+    headers = build_headers(site_cfg)
+
 
     # It ensures the User-Agent header is properly normalized to prevent malformed headers that can trigger 403 or bot-detection blocks
-    if "User-Agent" in headers:
-        headers["User-Agent"] = " ".join(headers["User-Agent"].split())
+    # if "User-Agent" in headers:
+    #     headers["User-Agent"] = " ".join(headers["User-Agent"].split())
     
     # ===== DEEP (Playwright) =====
     if deep:
@@ -467,13 +498,16 @@ async def run_scan(data, username=None, email=None, name=None, deep=False):
     
     out_results(results)
 
-    out(f"{Colors.RED}[x] {len(NOT_FOUND_SITES)} not Founded:", bold=True)
     
     if len(NOT_FOUND_SITES) > 0:
+        out(f"{Colors.RED}[x] {len(NOT_FOUND_SITES)} not Found:", bold=True)
         not_found_msg = ''
         for s in sorted(NOT_FOUND_SITES):
             not_found_msg += ' *** ' + s
         out(f"  {not_found_msg}")
+    else:
+        out(f"\n{Colors.GREEN}[+]  Your user is present in all platforms!\n", bold=True)
+
 
     out("\n👁️  SAURON EYE DONE\n", Colors.BOLD)
 
