@@ -4,7 +4,8 @@ import argparse
 import json
 import datetime
 import os
-from collections import Counter, defaultdict
+from collections import Counter
+
 import httpx
 
 # ================= COLORS & LEVELS =================
@@ -90,14 +91,34 @@ def out(msg: str, color: str = "", bold: bool = False):
     print(f"{style}{color}{msg}{Colors.RESET}")
     log(msg)
 
+
+# ================= PRINT =================
+def get_disclaimer():
+    return  (
+        "[! Disclaimer]\n"
+        "    - Deep scan mode uses a real browser to load JavaScript content.\n"
+        "    - It is intentionally slower to avoid username enumeration abuse.\n"
+        "    - No private APIs, authentication, or bypass techniques are used.\n"
+        )
+
+def get_help():
+        return(
+            "Sauron Eye OSINT Scanner\n"
+            "--data         By default, ./data.json\n"
+            "--username     Username to scan\n"
+            "--email        Email to scan\n"
+            "--name         Ex: \"Jonh Doe\"\n"
+            "--deep         Enable deep checks using Playwright + Chromium\n"
+        )
+
 def out_results(results: dict):
     if not results:
-        out("No results found", Colors.YELLOW)
+        out("No profile detected. Even my eye cannot see you.", Colors.YELLOW)
         return
     
     for key, val in results.items():
         if not val:
-            out("No results found", Colors.YELLOW)
+            out("No profile detected. Even my eye cannot see you.", Colors.YELLOW)
             continue
         out(f"\n\n{Colors.CYAN}[{key.upper()}]{Colors.RESET}  Found {len(val)}!\n", bold=True)
         
@@ -127,7 +148,6 @@ def out_results(results: dict):
                 
                 print(f"{'-'*platform_width}---{'-'*level_width}---{'-'*url_width}\n")
             
-
 def out_level_color(level: str):
     if level == Level.HIGH:
         return f'{Colors.BOLD}{Colors.GREEN}{Level.HIGH}{Colors.RESET}'
@@ -136,6 +156,77 @@ def out_level_color(level: str):
     else:
         return f'{Colors.BOLD}{Colors.CYAN}{Level.LOW}{Colors.RESET}'
 
+def out_profile_from_results(results: dict):
+    """
+    Generate and print a sarcastic Sauron-style digital profile
+    from results dict containing lists under keys like 'username' or 'name'.
+    Fractions are shown as counts/total rather than percentages.
+    """
+    if not results:
+        out("No digital presence detected. Even my Eye cannot find you.", Colors.YELLOW)
+        return
+
+    # Collect all tags from all lists in the dict
+    all_tags = []
+    for key, entries in results.items():
+        if not entries:
+            continue
+        for entry in entries:
+            all_tags.extend(entry.get("tags", []))
+
+    total = len(all_tags)
+    if total == 0:
+        out("No meaningful digital footprint… Orcs would say you're invisible.", Colors.YELLOW)
+        return
+
+    # Count tags
+    counter = Counter(all_tags)
+
+    out(f"\n\n{Colors.BLUE}[{"Profiling".upper()}]\n\nDigital profile analysis of the specimen (total tags: {total})\n", Colors.BLUE, bold=True)
+
+    # Print distribution as count/total
+    for tag, count in counter.items():
+        out(f" - {tag.capitalize()}: {count}/{total}")
+
+    # Sort by dominance
+    ordered = sorted(counter.items(), key=lambda x: x[1], reverse=True)
+    dominant, dom_count = ordered[0]
+    secondary = ordered[1][0] if len(ordered) > 1 else None
+
+    fun_profile = []
+
+    # Sarcastic verdict
+    # Start with dominant
+    if dominant == "hacking":
+        fun_profile.append(f"🧠 {dom_count}/{total} hacking → Future master of systems… or just a nerd clicking everywhere.")
+    elif dominant == "tech":
+        fun_profile.append(f"💻 {dom_count}/{total} tech → Obsessed with logic… pathetic yet strangely useful.")
+    elif dominant == "social":
+        fun_profile.append(f"📱 {dom_count}/{total} social → Active online, or so it seems…")
+
+    if secondary:
+        if secondary in ("tech", "hacking"):
+            fun_profile.append("⚙️ Secondary technical interest: precision in destruction and tinkering.")
+        elif secondary == "media":
+            fun_profile.append("🎥 Fascination with content: even Sauron's Eye would be jealous.")
+        elif secondary == "pro":
+            fun_profile.append("🏢 Likely professional use: enslaved to work, alas.")
+
+    # Surprise if media or social are very low
+    if counter.get("social", 0) / total < 0.2 or counter.get("media", 0) / total < 0.2:
+        fun_profile.append("😮 Low social/media activity… do you sure the specimen is really a hobbit?")
+
+    # Nuances
+    if counter.get("hacking", 0) / total > 0.4:
+        fun_profile.append("🔐 'Offensive-thinking' mindset: testing limits is your sport, mortal.")
+    if counter.get("ai", 0) / total > 0.15:
+        fun_profile.append("🤖 Curious about AI: apprentice sorcerer of new technologies.")
+
+    # Print verdict
+    if fun_profile:
+        out("\nVerdict:", Colors.BLUE, bold=True)
+        for line in fun_profile:
+            out(f"   {line}")
 
 # ================= UTILITIES =================    
 def derive_usernames(email: str):
@@ -246,23 +337,6 @@ def build_headers(site_cfg: dict) -> dict:
 
     return headers
 
-def get_disclaimer():
-    return  (
-        "[! Disclaimer]\n"
-        "    - Deep scan mode uses a real browser to load JavaScript content.\n"
-        "    - It is intentionally slower to avoid username enumeration abuse.\n"
-        "    - No private APIs, authentication, or bypass techniques are used.\n"
-        )
-
-def get_help():
-        return(
-            "Sauron Eye OSINT Scanner\n"
-            "--data         By default, ./data.json\n"
-            "--username     Username to scan\n"
-            "--email        Email to scan\n"
-            "--name         Ex: \"Jonh Doe\"\n"
-            "--deep         Enable deep checks using Playwright + Chromium\n"
-        )
 
 # ================= LOAD SITES =================
 def load_data(data, input_type: str | None = None) -> dict:
@@ -310,7 +384,6 @@ async def fetch(site_cfg, url, payload=None, deep=False, timeout=15000):
             response = await page.goto(url, wait_until="domcontentloaded", timeout=timeout)
             await page.wait_for_timeout(3000)
 
-            
             
             result = {
                 "status": response.status if response else None,
@@ -498,16 +571,17 @@ async def run_scan(data, username=None, email=None, name=None, deep=False):
     
     out_results(results)
 
-    
     if len(NOT_FOUND_SITES) > 0:
         out(f"{Colors.RED}[x] {len(NOT_FOUND_SITES)} not Found:", bold=True)
         not_found_msg = ''
         for s in sorted(NOT_FOUND_SITES):
-            not_found_msg += ' *** ' + s
+            not_found_msg += ' ** ' + s
         out(f"  {not_found_msg}")
     else:
         out(f"\n{Colors.GREEN}[+]  Your user is present in all platforms!\n", bold=True)
 
+
+    out_profile_from_results(results)
 
     out("\n👁️  SAURON EYE DONE\n", Colors.BOLD)
 
@@ -535,7 +609,6 @@ def main():
         out(f"\n👁️  Little one, at least one arg is required : --username, --email, or --name.\n\n{get_help()}")
         return
     
-
     asyncio.run(run_scan(username=username, email=email, name=name, data=data,deep=deep))
 
 if __name__ == "__main__":

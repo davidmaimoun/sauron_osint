@@ -126,7 +126,7 @@
           "couldn’t find",
           "not found"],
         "confidence": 1,
-        "tags": ["social", "media", "job"]
+        "tags": ["social", "media", "pro"]
     },
     
     "Mastodon": {
@@ -162,6 +162,15 @@
         "responsesError": [{"error": 404}],
         "confidence": 3,
         "tags": ["social", "culture"]
+    },
+
+    "Slack": {
+        "responseType": "status_code",
+        "regexCheck": "^[a-zA-Z][a-zA-Z0-9_-]*$",
+        "url": "https://{}.slack.com",
+        "urlMain": "https://slack.com",
+        "confidence": 3,
+        "tags": ["social", "pro"]
     },
 
     "TryHackMe": {
