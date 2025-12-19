@@ -32,6 +32,7 @@ class Status:
     UNKNOWN   = "unknown"
 
 DATA_JSON = 'data.json'
+
 KEY_USERNAME = 'username'
 KEY_NAME      = 'name'
 KEY_USERNAMES_PROBABLES = 'usernames_probables'
@@ -39,6 +40,25 @@ KEY_PLATFORM = 'platform'
 KEY_MESSAGE    = 'message'
 KEY_LEVEL    = 'level'
 KEY_EMAIL    = 'email'
+
+ERROR_LEXICON = [
+    "page not found",
+    "not found",
+    "does not exist",
+    "no such user",
+    "user not available",
+    "account suspended",
+    "invalid username",
+    "page could not be found",
+    "404",
+    "profile not found",
+    "not available",
+    "unavailable",
+    "cannot be found",
+    "no such account"
+]
+
+NOT_FOUND_SITES = set()
 
 # ================= LOGGING =================
 LOG_DIR = "logs"
@@ -63,7 +83,7 @@ def out_results(results: dict):
         if not val:
             out("No results found", Colors.YELLOW)
             continue
-        out(f"\n{Colors.CYAN}[{key.upper()}]{Colors.RESET}  Found {len(val)} items!\n", bold=True)
+        out(f"\n\n{Colors.CYAN}[{key.upper()}]{Colors.RESET}  Found {len(val)}!\n", bold=True)
         
         if key == KEY_USERNAME or key == KEY_NAME:
             if val:  
@@ -88,6 +108,9 @@ def out_results(results: dict):
 
                     url = v[KEY_MESSAGE]
                     print(f"{platform}   {level_color}  {Colors.BLUE}{url}{Colors.RESET}")
+                
+                print(f"{'-'*platform_width}---{'-'*level_width}---{'-'*url_width}\n")
+            
 
 def out_level_color(level: str):
     if level == Level.HIGH:
@@ -130,6 +153,10 @@ def map_status_code(status_code: int) -> Status:
 
     return Status.UNKNOWN
 
+def is_forbidden_exception(site_name):
+    s = site_name.lower()
+    return s == 'reddit' or s == 'medium'
+
 def get_confidence_level(conf):
     if conf == -1:
         return Level.UNKNOWN
@@ -139,46 +166,15 @@ def get_confidence_level(conf):
         else Level.LOW
     )
 
-def match_any(response_data: dict, patterns: list[dict]) -> bool:
-    """
-    Match response_data against ANY pattern in patterns
-    - string values: substring match (case-insensitive)
-    - non-string values: strict equality
-    """
-
-    # normalize response data
-    data = {
-        k.lower(): (v.lower() if isinstance(v, str) else v)
-        for k, v in response_data.items()
-    }
-
+def match_any(data, patterns):
     for pattern in patterns:
-        pat = {
-            k.lower(): (v.lower() if isinstance(v, str) else v)
-            for k, v in pattern.items()
-        }
-
-        matched = True
-
-        for k, v in pat.items():
-            if k not in data:
-                matched = False
-                break
-
-            # string → substring match
-            if isinstance(v, str):
-                if v not in data[k]:
-                    matched = False
-                    break
-            # non-string → strict match
-            else:
-                if data[k] != v:
-                    matched = False
-                    break
-
-        if matched:
-            return True
-
+        if isinstance(pattern, dict):
+            for k, v in pattern.items():
+                if k in data or v in data:
+                    return True
+        else:  # string
+            if pattern in data:
+                return True
     return False
 
 def match_text_errors(text: str, patterns: list) -> bool:
@@ -232,6 +228,7 @@ def get_disclaimer():
 def get_help():
         return(
             "Sauron Eye OSINT Scanner\n"
+            "--data         By default, ./data.json\n"
             "--username     Username to scan\n"
             "--email        Email to scan\n"
             "--name         Ex: \"Jonh Doe\"\n"
@@ -239,14 +236,14 @@ def get_help():
         )
 
 # ================= LOAD SITES =================
-def load_data(input_type: str | None = None) -> dict:
+def load_data(data, input_type: str | None = None) -> dict:
     """
     Load site definitions from JSON and optionally filter by input_type.
     If a site has no 'inputType', it defaults to 'username'.
     :param input_type: "username", "email", "name", etc.
     :return: dict of sites matching the input_type (or all if None)
     """
-    with open(DATA_JSON, "r", encoding="utf-8") as f:
+    with open(data, "r", encoding="utf-8") as f:
         sites = json.load(f)
 
     if input_type:
@@ -264,9 +261,13 @@ def load_data(input_type: str | None = None) -> dict:
 # ================= CHECK ENGINE =================
 
 async def fetch(site_cfg, url, payload=None, deep=False, timeout=15000):
-    headers = site_cfg.get("headers", {'User-Agent': 'Mozilla/5.0'})
     method = site_cfg.get("requestMethod", "GET").upper()
+    headers = site_cfg.get("headers", {'User-Agent': 'Mozilla/5.0'})
 
+    # It ensures the User-Agent header is properly normalized to prevent malformed headers that can trigger 403 or bot-detection blocks
+    if "User-Agent" in headers:
+        headers["User-Agent"] = " ".join(headers["User-Agent"].split())
+    
     # ===== DEEP (Playwright) =====
     if deep:
         from playwright.async_api import async_playwright
@@ -278,6 +279,8 @@ async def fetch(site_cfg, url, payload=None, deep=False, timeout=15000):
             response = await page.goto(url, wait_until="domcontentloaded", timeout=timeout)
             await page.wait_for_timeout(3000)
 
+            
+            
             result = {
                 "status": response.status if response else None,
                 "text": (await page.content()).lower(),
@@ -288,6 +291,7 @@ async def fetch(site_cfg, url, payload=None, deep=False, timeout=15000):
 
             await browser.close()
             return result
+
 
     # ===== NORMAL (HTTPX) =====
     async with httpx.AsyncClient(timeout=10, headers=headers, follow_redirects=True) as client:
@@ -300,6 +304,7 @@ async def fetch(site_cfg, url, payload=None, deep=False, timeout=15000):
             data = r.json()
         except Exception:
             data = None
+
 
         return {
             "status": r.status_code,
@@ -324,10 +329,12 @@ def analyze_response(
 
     status = map_status_code(response["status"])
 
+    
     # ===== STATUS HANDLING =====
     if status == Status.BAD:
         return None
 
+    # A forbidden might hidding an user
     if status == Status.FORBIDDEN:
         return {
             "platform": site_name,
@@ -337,11 +344,11 @@ def analyze_response(
             "confidence": 1,
             "tags": site_cfg.get("tags", [])
         }
-
+    
+ 
     # ===== JSON =====
     if response_type == "json" and response["json"]:
         data = response["json"]
-
         if responses_retry and match_any(data, responses_retry):
             return {
                 "platform": site_name,
@@ -352,7 +359,7 @@ def analyze_response(
                 "tags": []
             }
 
-        if responses_error and match_any(data, responses_error):
+        if responses_error and match_any(data, responses_error + ERROR_LEXICON):
             return None
 
         if responses_success and not match_any(data, responses_success):
@@ -390,23 +397,27 @@ async def check_site(site_name, site_cfg, username=None, name=None, deep=False):
 
     if username:
         url = site_cfg["url"].format(username)
+        url_probe = site_cfg.get("urlProbe", site_cfg["url"]).format(username)
+
         payload = site_cfg.get("requestPayload")
         if payload:
             payload = {k: v.format(username) for k, v in payload.items()}
     else:
         fn, ln = name.split(" ", 1)
         url = site_cfg["url"].format(fn, ln)
+        url_probe = site_cfg.get("urlProbe", site_cfg["url"]).format(fn, ln)
+
         payload = None
         username = name
 
     response = await fetch(
         site_cfg=site_cfg,
-        url=url,
+        url=url_probe,
         payload=payload,
         deep=deep and site_cfg.get("scanMode") == "deep"
     )
 
-    return analyze_response(
+    results = analyze_response(
         site_name=site_name,
         site_cfg=site_cfg,
         username=username,
@@ -414,10 +425,16 @@ async def check_site(site_name, site_cfg, username=None, name=None, deep=False):
         response=response,
         conf=conf
     )
+    if results:
+        return results
+    else:
+        NOT_FOUND_SITES.add(site_name)
+        return None
+
 
 # =================  SCAN  ====================
-async def scan(input_type, input_val, deep=False):
-    sites = load_data(input_type)
+async def scan(data, input_type, input_val, deep=False):
+    sites = load_data(data, input_type)
     if input_type == "username":
         tasks = [check_site(site, cfg, username=input_val, name=None, deep=deep) for site, cfg in sites.items()]
     elif input_type == "name":
@@ -428,27 +445,35 @@ async def scan(input_type, input_val, deep=False):
     return [r for r in results if r]
 
 
-async def generate_and_scan(username=None, email=None, name=None, deep=False):
+async def generate_and_scan(data, username=None, email=None, name=None,deep=False):
     results = {}
     
     if username:
-        out(f"Scan required for the username: {Colors.BLUE}{username}{Colors.RESET}")
-        results["username"] = await scan('username', username, deep=deep)
+        out(f"[>>>] Scanning the web for the username: {Colors.BLUE}{username}{Colors.RESET}")
+        results["username"] = await scan(data, 'username', username, deep=deep)
     
     if name:
-        out(f"Scan required for the name: {Colors.BLUE}{name}{Colors.RESET}")
-        results["name"] = await scan('name', name, deep=deep)
+        out(f"[>>>] Scanning the web for the name: {Colors.BLUE}{name}{Colors.RESET}")
+        results["name"] = await scan(data, 'name', name, deep=deep)
     return results
 
 
-async def run_scan(username=None, email=None, name=None, deep=False):
+async def run_scan(data, username=None, email=None, name=None, deep=False):
     out("\n👁️  SAURON EYE STARTED\n", Colors.BOLD)
     if deep:
         out(get_disclaimer(),Colors.YELLOW,)
 
-    results = await generate_and_scan(username=username, email=email, name=name, deep=deep)
+    results = await generate_and_scan(data, username=username, email=email, name=name, deep=deep)
     
     out_results(results)
+
+    out(f"{Colors.RED}[x] {len(NOT_FOUND_SITES)} not Founded:", bold=True)
+    
+    if len(NOT_FOUND_SITES) > 0:
+        not_found_msg = ''
+        for s in sorted(NOT_FOUND_SITES):
+            not_found_msg += ' *** ' + s
+        out(f"  {not_found_msg}")
 
     out("\n👁️  SAURON EYE DONE\n", Colors.BOLD)
 
@@ -456,6 +481,7 @@ async def run_scan(username=None, email=None, name=None, deep=False):
 # ================= ARGUMENTS =================
 def main():
     parser = argparse.ArgumentParser(description="Sauron Eye OSINT Scanner")
+    parser.add_argument("--data", required=True, default=DATA_JSON, help="By default, ./data.json")
     parser.add_argument("--username", type=str, help="Username to scan")
     parser.add_argument("--email", type=str, help="Email to scan")
     parser.add_argument("--name", type=str, help="ex: \"Jonh Doe\"")
@@ -464,15 +490,19 @@ def main():
 
     username = args.username
     email = args.email
-    name=args.name
-    deep=args.deep
+    name = args.name
+    data = args.data
+    deep = args.deep
 
+    if not data:
+        out(f"\n👁️  Little one, you need the data file path : --data.\n\n{get_help()}")
+        return
     if not username and not name and not email:
         out(f"\n👁️  Little one, at least one arg is required : --username, --email, or --name.\n\n{get_help()}")
         return
     
 
-    asyncio.run(run_scan(username=username, email=email, name=name, deep=deep))
+    asyncio.run(run_scan(username=username, email=email, name=name, data=data,deep=deep))
 
 if __name__ == "__main__":
     main()

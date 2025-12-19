@@ -71,20 +71,29 @@
     },
   
     "Google Play": {
-        "errorMsg": "the requested URL was not found on this server",
-        "errorType": "message",
         "inputType": "username",
         "url": "https://play.google.com/store/apps/developer?id={}",
-        "urlMain": "https://play.google.com",
-        "username_claimed": "GitHub"
+        "errorMsg": "the requested URL was not found on this server",
+        "errorType": "message",
+        "confidence": 2,
+        "tags": ["tech"]
     },
  
+    "HackerOne": {
+        "inputType": "username",
+        "url": "https://hackerone.com/{}",
+        "responseType": "html",
+        "responsesError": ["Looks like this page evaded detection"],
+        "confidence": 3,
+        "tags": ["tech", "hacking"]
+    },
+
     "HackTheBox": {
         "errorType": "status_code",
         "inputType": "username",
         "url": "https://forum.hackthebox.com/u/{}",
         "confidence": 2,
-        "tags": ["tech", "hack"]
+        "tags": ["tech", "hacking"]
     },
 
     "Hugging Face": {
@@ -116,8 +125,8 @@
           "Try searching for another.", 
           "couldn’t find",
           "not found"],
-        "confidence": 2,
-        "tags": ["social", "job"]
+        "confidence": 1,
+        "tags": ["social", "media", "job"]
     },
     
     "Mastodon": {
@@ -129,22 +138,30 @@
     },
 
     "Medium": {
-      "inputType": "username",
-        "url": "https://medium.com/@{}",
-      "urlProbe": "https://medium.com/feed/@{}",
-      "errorType": "status_code",
-      "confidence": 3,
-      "tags": ["media", "culture"]
+        "inputType": "username",
+        "scanMode": "deep",
+        "responseType": "html",
+        "responsesError": ["Out of nothing, something"],
+        "url": "https://medium.com/feed/@{}",
+        "urlProbe": "https://medium.com/feed/@{}",
+        "confidence": 3,
+        "tags": ["media", "culture"]
     },
   
     "Reddit": {
-      "inputType": "username",
+        "inputType": "username",
         "url": "https://www.reddit.com/user/{}",
-      "urlProbe": "https://www.reddit.com/user/{}/about.json",
-      "responseType": "json",
-      "responsesError": [{"error": 404}],
-      "confidence": 3,
-      "tags": ["social", "culture"]
+        "urlProbe": "https://www.reddit.com/user/{}/about.json",
+        "headers": {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "en-GB,en;q=0.9",
+        "Referer": "https://www.reddit.com/"
+        },
+        "responseType": "json",
+        "responsesError": [{"error": 404}],
+        "confidence": 3,
+        "tags": ["social", "culture"]
     },
 
     "TryHackMe": {
@@ -156,7 +173,7 @@
       "responsesSuccess": [{"success": true}],
       "responsesError": [{"success": false}],
       "confidence": 2,
-      "tags": ["tech", "cyber"]
+      "tags": ["tech", "hacking"]
     },
     
     "Twitch": {
