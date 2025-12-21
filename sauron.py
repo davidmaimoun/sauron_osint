@@ -427,8 +427,11 @@ async def fetch(site_cfg, url, payload=None, deep=False, timeout=15000):
             browser = await p.chromium.launch(headless=True)
             page = await browser.new_page(user_agent=headers.get("User-Agent"))
 
-            response = await page.goto(url, wait_until="domcontentloaded", timeout=timeout)
-            await page.wait_for_timeout(3000)
+            try:
+                response = await page.goto(url, wait_until="domcontentloaded", timeout=timeout)
+                await page.wait_for_timeout(3000)
+            except TimeoutError:
+                print("Page took too long to load, skipping or retrying...")
 
             result = {
                 "status": response.status if response else None,
@@ -478,6 +481,7 @@ def analyze_response(site_name, site_cfg, username, url_display, response, conf)
     response_type = site_cfg.get("responseType", None)
     response_target = site_cfg.get("responseTarget", None)
     response_error_meta_content = site_cfg.get("responseErrorMetaContent", None)
+    response_success_meta_content = site_cfg.get("responseSuccessMetaContent", None)
     responses_error = site_cfg.get("responsesError", [])
     responses_success = site_cfg.get("responsesSuccess", [])
     responses_retry = site_cfg.get("responsesRetry", [])
@@ -491,8 +495,8 @@ def analyze_response(site_name, site_cfg, username, url_display, response, conf)
 
     # ===== STATUS HANDLING =====
     # Check if responseType status_code, or also like codepen, need a deep html
-    if response_type == 'status_code' or (response_type == 'html' and response_target == "status"):
-
+    if response_type == 'status_code':
+        print(status)
         if status == Status.GOOD:
             return  {
                 "platform": site_name,
@@ -522,8 +526,8 @@ def analyze_response(site_name, site_cfg, username, url_display, response, conf)
         text = response["text"]
         title = response["title"]
 
-        # test_response(response)
-        
+        test_response(response)
+        print(text[:5000])
         if is_binary_garbage(text):
             return {
                 "platform": site_name,
@@ -537,8 +541,10 @@ def analyze_response(site_name, site_cfg, username, url_display, response, conf)
                 
         if response_target == "meta":
             # Ex case of telegram => check meta <meta property=\"og:description\"...
+            # Need to have only one tyoe of response, error or success (not both)
+            text_truncated = text[:10000]
             if response_error_meta_content:
-                if response_error_meta_content in text[:5000]:
+                if response_error_meta_content in text_truncated:
                     return None
                 else:
                     return {
@@ -549,8 +555,20 @@ def analyze_response(site_name, site_cfg, username, url_display, response, conf)
                         "confidence": conf,
                         "tags": site_cfg.get("tags", [])
                     } 
+            elif response_success_meta_content:
+                if response_success_meta_content in text_truncated:
+                    return {
+                            "platform": site_name,
+                            "username": username,
+                            "message": url_display,
+                            "level": get_confidence_level(conf),
+                            "confidence": conf,
+                            "tags": site_cfg.get("tags", [])
+                        }
+                else:
+                    return None
             else:
-                get_dev_error_response("reponseMetaErrorContent", site_name)
+                get_dev_error_response("reponseMeta<Success/Error>Content", site_name)
 
         else:
             target = text if not response_target or response_target == "text" else title

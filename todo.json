@@ -1,71 +1,38 @@
 {
-    "Exploit-DB": {
-    "url": "https://www.exploit-db.com/?author={}",
-    "responseType": "html",
-    "confidence": 3,
-    "tags": ["tech", "hacking"]
-  }
-  ,
-  "PentesterLab": {
-    "url": "https://pentesterlab.com/profile/{}",
-    "responseType": "status_code",
-    "confidence": 2,
-    "tags": ["tech", "hacking"]
-  }
-  ,
-  "Root-Me": {
-    "url": "https://www.root-me.org/{}",
-    "responseType": "status_code",
-    "confidence": 3,
-    "tags": ["tech", "hacking"]
-  },
   
-  "About.me": {
-    "url": "https://about.me/{}",
-    "responseType": "status_code",
-    "confidence": 3,
-    "tags": ["pro", "social"]
-  }
-  ,
-  "AngelList": {
-    "url": "https://angel.co/u/{}",
-    "responseType": "status_code",
-    "confidence": 3,
-    "tags": ["pro", "startup"]
-  }
-  ,
-  "Wellfound": {
-    "url": "https://wellfound.com/u/{}",
-    "responseType": "status_code",
-    "confidence": 3,
-    "tags": ["pro", "startup"]
-  },
+  
 
-  "Threads": {
-    "url": "https://www.threads.net/@{}",
-    "responseType": "status_code",
-    "confidence": 2,
-    "tags": ["social", "media"]
+   
+
+
+
+
+
+
+
+  
+
+
+  
+   
+  
+  
+
+  
+  
+  
+
+  
+    
+  
+
+  
+  
+  
+  
   }
-  ,
-  "Ko-fi": {
-    "url": "https://ko-fi.com/{}",
-    "responseType": "status_code",
-    "confidence": 2,
-    "tags": ["social", "creator"]
-  }
-  ,
-  "BuyMeACoffee": {
-    "url": "https://www.buymeacoffee.com/{}",
-    "responseType": "status_code",
-    "confidence": 2,
-    "tags": ["social", "creator"]
-  }
-  ,
-  "Patreon": {
-    "url": "https://www.patreon.com/{}",
-    "responseType": "status_code",
-    "confidence": 2,
-    "tags": ["social", "creator"]
-  }
+  
+  
+  
+
 }

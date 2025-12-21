@@ -1,4 +1,20 @@
 {
+  "About.me": {
+    "inputType": "username",
+    "url": "https://about.me/{}",
+    "responseType": "status_code",
+    "confidence": 3,
+    "tags": ["pro", "social"]
+  }, 
+
+  "AngelList": {
+    "inputType": "username",
+    "url": "https://angel.co/u/{}",
+    "responseType": "status_code",
+    "confidence": 3,
+    "tags": ["pro", "startup"]
+  },
+
   "Apple Developer": {
     "url": "https://developer.apple.com/forums/profile/{}",
     "urlMain": "https://developer.apple.com",
@@ -16,6 +32,14 @@
     "errorMsg": "Looking for something in Apple Support Communities?",
     "confidence": 3,
     "tags": ["tech", "dev"]
+  },
+
+  "Behance": {
+    "inputType": "username",
+    "url": "https://www.behance.net/{}",
+    "responseType": "status_code",
+    "confidence": 3,
+    "tags": ["social", "art", "design"]
   },
 
   "BitBucket": {
@@ -43,15 +67,49 @@
     "tags": ["tech", "hacking", "bugbounty"]
   },
 
+  "BuyMeACoffee": {
+    "inputType": "username",
+    "url": "https://www.buymeacoffee.com/{}",
+    "responseType": "status_code",
+    "confidence": 3,
+    "tags": ["social", "creator"]
+  },
+
+  "Carrd": {
+    "inputType": "username",
+    "url": "https://{}.carrd.co",
+    "responseType": "status_code",
+    "confidence": 3,
+    "tags": ["identity", "osint", "pivot"]
+  },
+
+  "Codeforces": {
+    "inputType": "username",
+    "url": "https://codeforces.com/profile/{}",
+    "scanMode": "deep",
+    "responseType": "html",
+    "responseTarget": "meta",
+    "responseErrorMetaContent": "<meta property=\"og:title\" content=\"codeforces\">",
+    "confidence": 3,
+    "tags": ["tech", "dev", "competitive"]
+  },
+
   "Codepen": {
     "inputType": "username",
     "url": "https://codepen.io/{}",
     "scanMode": "deep",
-    "responseType": "html",
-    "responseTarget": "status",
+    "responseType": "status_code",
     "confidence": 3,
     "tags": ["tech", "dev"]
   },
+
+  "Codewars": {
+      "inputType": "username",
+      "url": "https://www.codewars.com/users/{}",
+      "responseType": "status_code",
+      "confidence": 3,
+      "tags": ["tech", "dev", "community"]
+    },
 
   "Dev.to": {
     "url": "https://dev.to/{}",
@@ -95,6 +153,22 @@
     "tags": ["social"]
   },
 
+  "Docker Hub": {
+    "inputType": "username",
+    "url": "https://hub.docker.com/u/{}",
+    "responseType": "status_code",
+    "confidence": 3,
+    "tags": ["tech", "dev", "devops"]
+  },
+
+  "Goodreads": {
+      "inputType": "username",
+      "url": "https://www.goodreads.com/{}",
+      "responseType": "status_code",
+      "confidence": 3,
+      "tags": ["social", "culture"]
+    },
+
   "GitHub": {
     "url": "https://github.com/{}",
     "inputType": "username",
@@ -124,6 +198,14 @@
     "tags": ["tech"]
   },
 
+  "Gravatar": {
+    "inputType": "username",
+    "url": "https://en.gravatar.com/{}",
+    "responseType": "status_code",
+    "confidence": 2,
+    "tags": ["identity", "osint"]
+  },
+
   "HackerOne": {
     "url": "https://hackerone.com/{}",
     "inputType": "username",
@@ -132,6 +214,17 @@
     "responsesError": ["Looks like this page evaded detection"],
     "confidence": 3,
     "tags": ["tech", "hacking"]
+  },
+
+  "HackerRank": {
+    "inputType": "username",
+    "url": "https://www.hackerrank.com/{}",
+    "scanMode": "deep",
+    "responseType": "html",
+    "responseTarget": "title",
+    "responsesError": ["404", "not found"],
+    "confidence": 2,
+    "tags": ["tech", "dev", "hacking", "competitive"]
   },
 
   "HackTheBox": {
@@ -180,7 +273,7 @@
     "url": "https://www.kaggle.com/{}",
     "urlMain": "https://www.kaggle.com/",
     "confidence": 3,
-    "tags": ["social", "tech", "dev"]
+    "tags": ["social", "tech", "dev", "competitive"]
 
   },
 
@@ -192,14 +285,42 @@
     "tags": ["tech", "security"]
   },
 
+  "Ko-fi": {
+    "inputType":"username",
+    "url": "https://ko-fi.com/{}",
+    "scanMode": "deep",
+    "responseType": "html",
+    "responseTarget": "meta",
+    "responseSuccessMetaContent": "<meta property=\"og:description\" content=\"become a supporter of ",
+    "confidence": 2,
+    "tags": ["social", "creator"]
+  },
+
+  "Launchpad": {
+    "inputType": "username",
+    "url": "https://launchpad.net/~{}",
+    "responseType": "status_code",
+    "confidence": 3,
+    "tags": ["tech", "opensource"]
+  
+  },
+
   "LeetCode": {
     "inputType": "username",
     "url": "https://leetcode.com/{}",
     "scanMode": "deep",
-    "responseType": "html",
-    "responseTarget": "status",
+    "responseType": "status_code",
     "confidence": 3,
     "tags": ["tech", "dev"]
+  },
+
+  "Linktree": {
+    "inputType": "username",
+    "url": "https://linktr.ee/{}",
+    "scanMode": "deep",
+    "responseType": "status_code",
+    "confidence": 3,
+    "tags": ["identity", "osint", "pivot"]
   },
 
   "Mastodon": {
@@ -220,6 +341,47 @@
     "responsesError": ["Out of nothing, something"],
     "confidence": 3,
     "tags": ["media", "culture"]
+  },
+
+  "NPM": {
+    "inputType": "username",
+    "url": "https://www.npmjs.com/~{}",
+    "scanMode": "deep",
+    "responseType": "status_code",
+    "confidence": 3,
+    "tags": ["tech", "dev"]
+  },
+
+  "OpenCollective": {
+    "inputType": "username",
+    "url": "https://opencollective.com/{}",
+    "responseType": "status_code",
+    "confidence": 2,
+    "tags": ["tech", "opensource", "community"]
+  },
+
+  "Pastebin": {
+      "inputType": "username",
+      "url": "https://pastebin.com/u/{}",
+      "responseType": "status_code",
+      "confidence": 2,
+      "tags": ["tech", "security", "leak"]
+    },
+
+  "Patreon": {
+    "inputType": "username",
+    "url": "https://www.patreon.com/{}",
+    "responseType": "status_code",
+    "confidence": 2,
+    "tags": ["social", "creator"]
+  },
+
+  "PentesterLab": {
+    "inputType": "username",
+    "url": "https://pentesterlab.com/profile/{}",
+    "responseType": "status_code",
+    "confidence": 2,
+    "tags": ["tech", "hacking"]
   },
 
   "Pinterest": {
@@ -271,6 +433,25 @@
     "tags": ["tech", "dev"]
   },  
 
+  "RubyGems": {
+    "inputType": "username",
+    "url": "https://rubygems.org/profiles/{}",
+    "responseType": "status_code",
+    "confidence": 3,
+    "tags": ["tech", "dev", "ruby"]
+  },
+
+  "Root-Me": {
+    "url": "https://www.root-me.org/{}",
+    "responseType": "html",
+    "scanMode": "deep",
+    "responseTarget": "text",
+    "responsesSuccess": ["profil de"],
+    "responsesError": ["erreur 404"],
+    "confidence": 3,
+    "tags": ["tech", "hacking"]
+  },
+
   "Slack": {
     "url": "https://{}.slack.com",
     "urlMain": "https://slack.com",
@@ -279,6 +460,14 @@
     "responseType": "status_code",
     "confidence": 3,
     "tags": ["social", "pro"]
+  },
+
+  "SoundCloud": {
+    "inputType": "username",
+    "url": "https://soundcloud.com/{}",
+    "responseType": "status_code",
+    "confidence": 1,
+    "tags": ["social", "media"]
   },
 
   "SourceForge": {
@@ -351,6 +540,14 @@
     "tags": ["social", "media", "culture"]
   },
 
+  "Wellfound": {
+    "inputType": "username",
+    "url": "https://wellfound.com/u/{}",
+    "responseType": "status_code",
+    "confidence": 3,
+    "tags": ["pro", "startup"]
+  },
+
   "X(Twitter)": {
     "url": "https://x.com/{}",
     "scanMode": "deep",
@@ -365,6 +562,14 @@
     ],
     "confidence": 2,
     "tags": ["social", "media", "culture"]
+  },
+
+  "YesWeHack": {
+    "inputType": "username",
+    "url": "https://yeswehack.com/hunters/{}",
+    "responseType": "status_code",
+    "confidence": 2,
+    "tags": ["tech", "hacking", "bugbounty", "competitive"]
   },
 
   "YouTube": {
