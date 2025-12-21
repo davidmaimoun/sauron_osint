@@ -2,6 +2,8 @@
 
 Sauron is an **OSINT username profiling tool** designed to discover a user's presence across **social media, tech platforms, and online services**.
 
+Designed and implemented a modular OSINT username enumeration engine with adaptive detection logic, anti-bot awareness, confidence scoring, and browser-based fallback for protected platforms.
+
 Inspired by the architecture and philosophy of **Sherlock**, Sauron uses a **JSON-driven platform definition** to perform scalable and extensible username reconnaissance.
 
 > “One username to rule them all.”
