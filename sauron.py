@@ -4,6 +4,7 @@ import argparse
 import json
 import datetime
 import os
+import random
 from collections import Counter
 
 import httpx
@@ -59,21 +60,44 @@ ERROR_LEXICON = [
     "no such account"
 ]
 
-DEFAULT_HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/142.0.0.0 Safari/537.36"
-    ),
-    "Accept": (
-        "text/html,application/xhtml+xml,application/xml;"
-        "q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8"
-    ),
-    "Accept-Language": "en-GB,en;q=0.9",
-    "Accept-Encoding": "gzip, deflate, br",
-    "Connection": "keep-alive",
-    "Upgrade-Insecure-Requests": "1",
-}
+UA_POOL = [
+    # Chrome – Windows
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/120.0.0.0 Safari/537.36",
+
+    # Chrome – Linux
+    "Mozilla/5.0 (X11; Linux x86_64) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/120.0.0.0 Safari/537.36",
+
+    # Firefox – Windows
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) "
+    "Gecko/20100101 Firefox/121.0",
+
+    # Safari – macOS
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_5) "
+    "AppleWebKit/605.1.15 (KHTML, like Gecko) "
+    "Version/17.0 Safari/605.1.15",
+]
+
+
+def build_default_headers():
+    """
+    Build realistic browser headers with UA rotation
+    """
+    return {
+        "User-Agent": random.choice(UA_POOL),
+        "Accept": (
+            "text/html,application/xhtml+xml,application/xml;"
+            "q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8"
+        ),
+        "Accept-Language": "en-GB,en;q=0.9",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1",
+        "Referer": "https://www.google.com/",
+    }
 
 NOT_FOUND_SITES = set()
 
@@ -110,6 +134,9 @@ def get_help():
             "--name         Ex: \"Jonh Doe\"\n"
             "--deep         Enable deep checks using Playwright + Chromium\n"
         )
+
+def get_dev_error_response(res, site_name):
+    return f'[Dev] Required {res} for {site_name}'
 
 def out_results(results: dict):
     if not results:
@@ -229,6 +256,11 @@ def out_profile_from_results(results: dict):
             out(f"   {line}")
 
 # ================= UTILITIES =================    
+def test_response(res):
+    for k,v in res.items():
+            if k != "text":
+                print(k,v)
+                
 def derive_usernames(email: str):
     local = email.split("@")[0]
     candidates = [
@@ -284,52 +316,58 @@ def match_any(data, patterns):
                 return True
     return False
 
-def match_text_errors(text: str, patterns: list) -> bool:
-    text = text.lower()
+def match_response(input_str: str, patterns: list[str], ) -> bool:
+    if not isinstance(input_str, str):
+        return False
 
+    input_str = input_str.lower()
     for p in patterns:
-        # simple string
-        if isinstance(p, str):
-            if p.lower() in text:
-                return True
-
-        # dict pattern (future-proof)
-        elif isinstance(p, dict):
-            for v in p.values():
-                if isinstance(v, str) and v.lower() in text:
-                    return True
+        if isinstance(p, str) and p.lower() in input_str:
+            return True
 
     return False
 
-def extract_retry_message(response_data: dict, patterns: list[dict]) -> str | None:
+
+def json_to_text(data) -> str:
+    """
+    Flatten any JSON (dict / list) into a searchable text string.
+    """
+    if data is None:
+        return ""
+
+    if isinstance(data, str):
+        return data.lower()
+
+    if isinstance(data, dict):
+        return " ".join(
+            json_to_text(v) for v in data.values()
+        )
+
+    if isinstance(data, list):
+        return " ".join(
+            json_to_text(item) for item in data
+        )
+
+    return str(data).lower()
+
+def extract_retry_message(response_data, patterns) -> str | None:
     """
     Return the REAL retry message from response_data
     if it matches any retry pattern.
     """
-    data = {
-        k.lower(): (v.lower() if isinstance(v, str) else v)
-        for k, v in response_data.items()
-    }
+    if not isinstance(response_data, str):
+        return ''
 
-    for pattern in patterns:
-        pat = {
-            k.lower(): (v.lower() if isinstance(v, str) else v)
-            for k, v in pattern.items()
-        }
+    response_data = response_data.lower()
+    for p in patterns:
+        if isinstance(p, str) and p.lower() in response_data:
+            return p
 
-        for k, v in pat.items():
-            if k in data and isinstance(v, str) and v in data[k]:
-                # return original (non-lowercased) message
-                return response_data.get(k)
-
-    return None
+    return ''
 
 def build_headers(site_cfg: dict) -> dict:
-    """
-    Merge DEFAULT_HEADERS with site-specific headers
-    Site headers override defaults
-    """
-    headers = DEFAULT_HEADERS.copy()
+  
+    headers = build_default_headers()
     site_headers = site_cfg.get("headers", {})
 
     if site_headers:
@@ -337,6 +375,15 @@ def build_headers(site_cfg: dict) -> dict:
 
     return headers
 
+def is_binary_garbage(text: str) -> bool:
+    if not text:
+        return False
+
+    # Count non printable characters
+    bad = sum(1 for c in text if ord(c) < 9 or ord(c) > 126)
+    ratio = bad / len(text)
+
+    return ratio > 0.3
 
 # ================= LOAD SITES =================
 def load_data(data, input_type: str | None = None) -> dict:
@@ -368,7 +415,6 @@ async def fetch(site_cfg, url, payload=None, deep=False, timeout=15000):
     # headers = site_cfg.get("headers", {'User-Agent': 'Mozilla/5.0'})
     headers = build_headers(site_cfg)
 
-
     # It ensures the User-Agent header is properly normalized to prevent malformed headers that can trigger 403 or bot-detection blocks
     # if "User-Agent" in headers:
     #     headers["User-Agent"] = " ".join(headers["User-Agent"].split())
@@ -384,7 +430,6 @@ async def fetch(site_cfg, url, payload=None, deep=False, timeout=15000):
             response = await page.goto(url, wait_until="domcontentloaded", timeout=timeout)
             await page.wait_for_timeout(3000)
 
-            
             result = {
                 "status": response.status if response else None,
                 "text": (await page.content()).lower(),
@@ -404,80 +449,125 @@ async def fetch(site_cfg, url, payload=None, deep=False, timeout=15000):
         else:
             r = await client.get(url)
 
-        try:
-            data = r.json()
-        except Exception:
-            data = None
+        content_type = r.headers.get("content-type", "").lower()
 
+        json_data = None
+        text_data = None
+
+        if "application/json" in content_type:
+            try:
+                json_data = r.json()
+            except Exception:
+                text_data = r.text.lower()
+        else:
+            text_data = r.text.lower()
+
+        # convert json into text (make the match easier)
+        if json_data is not None:
+            text_data = json_to_text(json_data)
 
         return {
             "status": r.status_code,
-            "text": r.text.lower(),
+            "json": json_data,   # opt : to debug
+            "text": text_data,   # str 
             "title": "",
-            "json": data,
             "page": None
         }
 
-def analyze_response(
-    site_name,
-    site_cfg,
-    username,
-    url_display,
-    response,
-    conf
-):
-    response_type = site_cfg.get("responseType")
+def analyze_response(site_name, site_cfg, username, url_display, response, conf):
+    response_type = site_cfg.get("responseType", None)
+    response_target = site_cfg.get("responseTarget", None)
+    response_error_meta_content = site_cfg.get("responseErrorMetaContent", None)
     responses_error = site_cfg.get("responsesError", [])
     responses_success = site_cfg.get("responsesSuccess", [])
     responses_retry = site_cfg.get("responsesRetry", [])
 
+    if not response_type: 
+        exit(get_dev_error_response('responseType',site_name))
+    if response_type == 'html' and not response_target:
+        exit(get_dev_error_response('responseTarget',site_name))
+
     status = map_status_code(response["status"])
 
-    
     # ===== STATUS HANDLING =====
-    if status == Status.BAD:
-        return None
+    # Check if responseType status_code, or also like codepen, need a deep html
+    if response_type == 'status_code' or (response_type == 'html' and response_target == "status"):
 
-    # A forbidden might hidding an user
-    if status == Status.FORBIDDEN:
-        return {
-            "platform": site_name,
-            "username": username,
-            "message": "access forbidden - this may indicate that the user exists",
-            "level": "forbidden",
-            "confidence": 1,
-            "tags": site_cfg.get("tags", [])
-        }
-    
- 
-    # ===== JSON =====
-    if response_type == "json" and response["json"]:
-        data = response["json"]
-        if responses_retry and match_any(data, responses_retry):
+        if status == Status.GOOD:
+            return  {
+                "platform": site_name,
+                "username": username,
+                "message": url_display,
+                "level": get_confidence_level(conf),
+                "confidence": conf,
+                "tags": site_cfg.get("tags", [])
+            }
+        
+        elif status == Status.FORBIDDEN:
             return {
                 "platform": site_name,
                 "username": username,
-                "message": extract_retry_message(data, responses_retry),
-                "level": "retry",
-                "confidence": -1,
-                "tags": []
-            }
-
-        if responses_error and match_any(data, responses_error + ERROR_LEXICON):
+                "message": "access forbidden - this may indicate that the user exists - or blocked by anti-bot protection",
+                "level": "forbidden",
+                "confidence": 1,
+                "tags": site_cfg.get("tags", [])
+        }
+    
+        elif status == Status.BAD:
             return None
-
-        if responses_success and not match_any(data, responses_success):
-            return None
-
+    
+   
     # ===== HTML / MESSAGE =====
     if response_type in ("html", "message"):
         text = response["text"]
         title = response["title"]
 
-        if responses_error and match_text_errors(text, responses_error):
-            return None
+        # test_response(response)
+        
+        if is_binary_garbage(text):
+            return {
+                "platform": site_name,
+                "username": username,
+                "message": "blocked by anti-bot protection",
+                "level": "retry",
+                "confidence": -1,
+                "tags": []
+            }
 
-        if username.lower() in text or username.lower() in title:
+                
+        if response_target == "meta":
+            # Ex case of telegram => check meta <meta property=\"og:description\"...
+            if response_error_meta_content:
+                if response_error_meta_content in text[:5000]:
+                    return None
+                else:
+                    return {
+                        "platform": site_name,
+                        "username": username,
+                        "message": url_display,
+                        "level": get_confidence_level(conf),
+                        "confidence": conf,
+                        "tags": site_cfg.get("tags", [])
+                    } 
+            else:
+                get_dev_error_response("reponseMetaErrorContent", site_name)
+
+        else:
+            target = text if not response_target or response_target == "text" else title
+
+        
+   
+        if responses_retry and match_response(target, responses_retry):
+            return {
+                "platform": site_name,
+                "username": username,
+                "message": extract_retry_message(target, responses_retry) or "retry",
+                "level": "retry",
+                "confidence": -1,
+                "tags": []
+            }
+
+        if responses_success and match_response(target, responses_success):
             return {
                 "platform": site_name,
                 "username": username,
@@ -486,15 +576,19 @@ def analyze_response(
                 "confidence": conf,
                 "tags": site_cfg.get("tags", [])
             }
-
+        
+        elif responses_error and match_response(target, responses_error):
+            return None
+        
+        
     return {
-        "platform": site_name,
-        "username": username,
-        "message": url_display,
-        "level": get_confidence_level(conf),
-        "confidence": conf,
-        "tags": site_cfg.get("tags", [])
-    }
+                "platform": site_name,
+                "username": username,
+                "message": url_display,
+                "level": get_confidence_level(conf),
+                "confidence": conf,
+                "tags": site_cfg.get("tags", [])
+            }
 
 async def check_site(site_name, site_cfg, username=None, name=None, deep=False):
     conf = site_cfg.get("confidence", 1)

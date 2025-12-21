@@ -1,225 +1,377 @@
 {
-    "Apple Developer": {
-        "errorType": "status_code",
-        "inputType": "username",
-        "url": "https://developer.apple.com/forums/profile/{}",
-        "urlMain": "https://developer.apple.com",
-        "confidence": 3,
-        "tags": ["tech", "dev"]
-    },
+  "Apple Developer": {
+    "url": "https://developer.apple.com/forums/profile/{}",
+    "urlMain": "https://developer.apple.com",
+    "inputType": "username",
+    "responseType": "status_code",
+    "confidence": 3,
+    "tags": ["tech", "dev"]
+  },
 
-    "Apple Discussions": {
-        "errorMsg": "Looking for something in Apple Support Communities?",
-        "errorType": "message",
-        "inputType": "username",
-        "url": "https://discussions.apple.com/profile/{}",
-        "urlMain": "https://discussions.apple.com",
-        "confidence": 3,
-        "tags": ["tech", "dev"]
-    },
+  "Apple Discussions": {
+    "url": "https://discussions.apple.com/profile/{}",
+    "urlMain": "https://discussions.apple.com",
+    "inputType": "username",
+    "responseType": "message",
+    "errorMsg": "Looking for something in Apple Support Communities?",
+    "confidence": 3,
+    "tags": ["tech", "dev"]
+  },
 
-    "Bluesky": {
-        "errorType": "status_code",
-        "inputType": "username",
-        "url": "https://bsky.app/profile/{}.bsky.social",
-        "urlProbe": "https://public.api.bsky.app/xrpc/app.bsky.actor.getProfile?actor={}.bsky.social",
-        "confidence": 3,
-        "tags": ["social"]
-    },
+  "BitBucket": {
+    "responseType": "status_code",
+    "url": "https://api.bitbucket.org/2.0/repositories/{}",
+    "regexCheck": "^[a-zA-Z0-9-_]{1,30}$",
+    "confidence": 3,
+    "tags": ["tech", "dev"]
+  },
 
-    "Dev.to": {
-        "inputType": "username",
-        "url": "https://dev.to/{}",
-        "errorType": "status_code",
-        "confidence": 85,
-        "tags": ["tech"]
-    },
+  "Bluesky": {
+    "url": "https://bsky.app/profile/{}.bsky.social",
+    "urlProbe": "https://public.api.bsky.app/xrpc/app.bsky.actor.getProfile?actor={}.bsky.social",
+    "inputType": "username",
+    "responseType": "status_code",
+    "confidence": 3,
+    "tags": ["social"]
+  },
 
-    "Discord": {
-        "responseType": "json",
-        "inputType": "username",
-        "url": "https://discord.com",
-        "urlMain": "https://discord.com/",
-        "urlProbe": "https://discord.com/api/v9/unique-username/username-attempt-unauthed",
-        "responsesSuccess": [{"taken": true}],
-        "responsesError":  [{"taken": false}], 
-        "responsesRetry": [{"message": "The resource is being rate limited"}, {"message": "retry"}],
-        "requestMethod": "POST",
-        "requestPayload": {
-        "username": "{}"
-        },
-        "headers": {
-        "Content-Type": "application/json"
-        }
-    },
+  "Bugcrowd": {
+    "url": "https://bugcrowd.com/engagements/{}",
+    "inputType": "username",
+    "responseType": "status_code",
+    "confidence": 3,
+    "tags": ["tech", "hacking", "bugbounty"]
+  },
 
-    "Discord.bio": {
-        "errorType": "html",
-        "responsesError": ["<title>Server Error (500)</title>"],
-        "inputType": "username",
-        "url": "https://discords.com/api-v2/bio/details/{}",
-        "urlMain": "https://discord.bio/"
-    },
+  "Codepen": {
+    "inputType": "username",
+    "url": "https://codepen.io/{}",
+    "scanMode": "deep",
+    "responseType": "html",
+    "responseTarget": "status",
+    "confidence": 3,
+    "tags": ["tech", "dev"]
+  },
 
-    "GitHub": {
-      "inputType": "username",
-        "url": "https://github.com/{}",
-      "errorType": "status_code",
-      "regexCheck": "^[a-zA-Z0-9-]{1,39}$",
-      "confidence": 3,
-      "tags": ["tech"]
-    },
-  
-    "Google Play": {
-        "inputType": "username",
-        "url": "https://play.google.com/store/apps/developer?id={}",
-        "errorMsg": "the requested URL was not found on this server",
-        "errorType": "message",
-        "confidence": 2,
-        "tags": ["tech"]
-    },
- 
-    "HackerOne": {
-        "inputType": "username",
-        "url": "https://hackerone.com/{}",
-        "responseType": "html",
-        "responsesError": ["Looks like this page evaded detection"],
-        "confidence": 3,
-        "tags": ["tech", "hacking"]
-    },
+  "Dev.to": {
+    "url": "https://dev.to/{}",
+    "inputType": "username",
+    "responseType": "status_code",
+    "confidence": 85,
+    "tags": ["tech"]
+  },
 
-    "HackTheBox": {
-        "errorType": "status_code",
-        "inputType": "username",
-        "url": "https://forum.hackthebox.com/u/{}",
-        "confidence": 2,
-        "tags": ["tech", "hacking"]
+  "Discord": {
+    "url": "https://discord.com",
+    "urlMain": "https://discord.com/",
+    "urlProbe": "https://discord.com/api/v9/unique-username/username-attempt-unauthed",
+    "inputType": "username",
+    "requestMethod": "POST",
+    "requestPayload": {
+      "username": "{}"
     },
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "responseType": "message",
+    "responsesSuccess": ["true"],
+    "responsesError": ["false"],
+    "responsesRetry": [
+      {"message": "The resource is being rate limited"},
+      {"message": "retry"}
+    ],
+    "confidence": 3,
+    "tags": ["social"]
+  },
 
-    "Hugging Face": {
-        "inputType": "username",
-        "url": "https://huggingface.co/{}",
-        "errorType": "status_code",
-        "confidence": 3,
-        "tags": ["tech", "ai"]
-    },
+  "Discord.bio": {
+    "url": "https://discords.com/api-v2/bio/details/{}",
+    "urlMain": "https://discord.bio/",
+    "inputType": "username",
+    "responseType": "html",
+    "responseTarget": "text",
+    "responsesError": ["<title>Server Error (500)</title>"],
+    "confidence": 2,
+    "tags": ["social"]
+  },
 
-    "Keybase": {
-        "inputType": "username",
-        "url": "https://keybase.io/{}",
-        "errorType": "status_code",
-        "confidence": 3,
-        "tags": ["tech", "security"]
-    },
+  "GitHub": {
+    "url": "https://github.com/{}",
+    "inputType": "username",
+    "regexCheck": "^[a-zA-Z0-9-]{1,39}$",
+    "responseType": "status_code",
+    "confidence": 3,
+    "tags": ["tech"]
+  },
 
-    "Linkedin": {
-        "url": "https://www.linkedin.com/pub/dir/{}/{}",
-        "inputType": "name",
-        "scanMode": "deep",
-        "responseType": "html",
-        "responsesSuccess": ["Results for"],
-        "responsesError": [
-          "We couldn’t find a match for", 
-          "Please make sure your keywords are spelled correctly", 
-          "doesn’t exist", 
-          "Try searching for another.", 
-          "couldn’t find",
-          "not found"],
-        "confidence": 1,
-        "tags": ["social", "media", "pro"]
-    },
-    
-    "Mastodon": {
-      "inputType": "username",
-        "url": "https://mastodon.social/@{}",
-      "errorType": "status_code",
-      "confidence": 3,
-      "tags": ["social"]
-    },
+  "GitLab": {
+    "url": "https://gitlab.com/{}",
+    "urlProbe": "https://gitlab.com/api/v4/users?username={}",
+    "inputType": "username",
+    "responseType": "html",
+    "responseTarget": "text",
+    "responsesSuccess": ["id", "username"],
+    "confidence": 3,
+    "tags": ["tech", "dev"]
+  },
 
-    "Medium": {
-        "inputType": "username",
-        "scanMode": "deep",
-        "responseType": "html",
-        "responsesError": ["Out of nothing, something"],
-        "url": "https://medium.com/feed/@{}",
-        "urlProbe": "https://medium.com/feed/@{}",
-        "confidence": 3,
-        "tags": ["media", "culture"]
-    },
-  
-    "Reddit": {
-        "inputType": "username",
-        "url": "https://www.reddit.com/user/{}",
-        "urlProbe": "https://www.reddit.com/user/{}/about.json",
-        "headers": {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
-        "Accept": "application/json, text/plain, */*",
-        "Accept-Language": "en-GB,en;q=0.9",
-        "Referer": "https://www.reddit.com/"
-        },
-        "responseType": "json",
-        "responsesError": [{"error": 404}],
-        "confidence": 3,
-        "tags": ["social", "culture"]
-    },
+  "Google Play": {
+    "url": "https://play.google.com/store/apps/developer?id={}",
+    "inputType": "username",
+    "responseType": "message",
+    "errorMsg": "the requested URL was not found on this server",
+    "confidence": 2,
+    "tags": ["tech"]
+  },
 
-    "Slack": {
-        "responseType": "status_code",
-        "regexCheck": "^[a-zA-Z][a-zA-Z0-9_-]*$",
-        "url": "https://{}.slack.com",
-        "urlMain": "https://slack.com",
-        "confidence": 3,
-        "tags": ["social", "pro"]
-    },
+  "HackerOne": {
+    "url": "https://hackerone.com/{}",
+    "inputType": "username",
+    "responseType": "html",
+    "responseTarget": "text",
+    "responsesError": ["Looks like this page evaded detection"],
+    "confidence": 3,
+    "tags": ["tech", "hacking"]
+  },
 
-    "TryHackMe": {
-      "inputType": "username",
-        "url": "https://tryhackme.com/p/{}",
-      "urlProbe": "https://tryhackme.com/api/user/exist/{}",
-      "regexCheck": "^[a-zA-Z0-9.]{1,16}$",
-      "responseType": "json",
-      "responsesSuccess": [{"success": true}],
-      "responsesError": [{"success": false}],
-      "confidence": 2,
-      "tags": ["tech", "hacking"]
-    },
-    
-    "Twitch": {
-        "inputType": "username",
-        "url": "https://www.twitch.tv/{}",
-        "scanMode": "deep",
-        "responseType": "html",
-        "responsesError": [
-        "Sorry. Unless you've got a time machine, that content is unavailable.",
-        "this channel is unavailable",
-        "page not found"
-        ],
-        "positiveSelectors": [
-            "meta[property='og:title']",
-            "button:has-text('Follow')"
-        ],
-        "confidence": 2,
-        "tags": ["social", "media", "culture"]
-    },
+  "HackTheBox": {
+    "url": "https://forum.hackthebox.com/u/{}",
+    "inputType": "username",
+    "responseType": "status_code",
+    "confidence": 2,
+    "tags": ["tech", "hacking"]
+  },
 
-    "X(Twitter)": {
-        "inputType": "username",
-        "url": "https://x.com/{}",
-        "scanMode": "deep",
-        "responseType": "html",
-        "responsesError": ["This account doesn’t exist", "doesn’t exist", "Try searching for another.", "not found"],
-        "confidence": 2,
-        "tags": ["social", "media", "culture"]
+  "Hugging Face": {
+    "url": "https://huggingface.co/{}",
+    "inputType": "username",
+    "responseType": "status_code",
+    "confidence": 3,
+    "tags": ["tech", "ai"]
+  },
+
+  "Instagram": {
+    "inputType": "username",
+    "scanMode": "deep",
+    "responseType": "html",
+    "responseTarget": "title",
+    "url": "https://www.instagram.com/{}",
+    "responsesSuccess": ["instagram photos and videos"],
+    "responsesError": [
+      "Profile isn't available"
+    ],
+    "confidence": 2,
+    "tags": ["social", "media"]
+  },
+
+  "Instapaper": {
+    "inputType": "username",
+    "responseType": "status_code",
+    "request_method": "GET",
+    "url": "https://www.instapaper.com/p/{}",
+    "confidence": 3,
+    "tags": ["social", "media", "culture"]
+
+  },
+
+  "Kaggle": {
+    "inputType": "username",
+    "responseType": "status_code",
+    "url": "https://www.kaggle.com/{}",
+    "urlMain": "https://www.kaggle.com/",
+    "confidence": 3,
+    "tags": ["social", "tech", "dev"]
+
+  },
+
+  "Keybase": {
+    "inputType": "username",
+    "url": "https://keybase.io/{}",
+    "responseType": "status_code",
+    "confidence": 3,
+    "tags": ["tech", "security"]
+  },
+
+  "LeetCode": {
+    "inputType": "username",
+    "url": "https://leetcode.com/{}",
+    "scanMode": "deep",
+    "responseType": "html",
+    "responseTarget": "status",
+    "confidence": 3,
+    "tags": ["tech", "dev"]
+  },
+
+  "Mastodon": {
+    "url": "https://mastodon.social/@{}",
+    "inputType": "username",
+    "responseType": "status_code",
+    "confidence": 3,
+    "tags": ["social"]
+  },
+
+  "Medium": {
+    "url": "https://medium.com/feed/@{}",
+    "urlProbe": "https://medium.com/feed/@{}",
+    "scanMode": "deep",
+    "inputType": "username",
+    "responseType": "html",
+    "responseTarget": "text",
+    "responsesError": ["Out of nothing, something"],
+    "confidence": 3,
+    "tags": ["media", "culture"]
+  },
+
+  "Pinterest": {
+    "url": "https://www.pinterest.com/{}/",
+    "inputType": "username",
+    "responseType": "html",
+    "scanMode": "deep",
+    "responseTarget": "title",
+    "responsesSuccess": ["profile", "pinterest"],
+    "confidence": 2,
+    "tags": ["social", "media", "art"]
+  },
+
+  "PyPI": {
+    "url": "https://pypi.org/user/{}",
+    "scanMode": "deep",
+    "responseType": "html",
+    "responseTarget": "title",
+    "responsesSuccess": ["profile of"],
+    "responsesError": ["page not found", "page not found (404)", "404"],
+    "confidence": 3,
+    "tags": ["tech", "dev"]
+  },
+
+  "Reddit": {
+    "url": "https://www.reddit.com/user/{}",
+    "urlProbe": "https://www.reddit.com/user/{}/about.json",
+    "scanMode": "deep",
+    "inputType": "username",
+    "headers": {
+      "User-Agent": "Mozilla/5.0",
+      "Accept": "application/json",
+      "Accept-Language": "en-GB,en;q=0.9",
+      "Referer": "https://www.reddit.com/",
+       "Origin": "https://www.reddit.com"
     },
+    "responseType": "message",
+    "responsesError": ["error","404"],
+    "responsesRetry": ["your request has been blocked due to a network policy."],
+    "confidence": 3,
+    "tags": ["social", "culture"]
+  },
 
-    "YouTube": {
-      "inputType": "username",
-        "url": "https://www.youtube.com/@{}",
-      "errorType": "status_code",
-      "confidence": 3,
-      "tags": ["social", "media", "culture"]
-    }
+  "Replit": {
+    "inputType": "username",
+    "url": "https://replit.com/@{}",
+    "responseType": "status_code",
+    "confidence": 2,
+    "tags": ["tech", "dev"]
+  },  
 
-  
+  "Slack": {
+    "url": "https://{}.slack.com",
+    "urlMain": "https://slack.com",
+    "inputType": "username",
+    "regexCheck": "^[a-zA-Z][a-zA-Z0-9_-]*$",
+    "responseType": "status_code",
+    "confidence": 3,
+    "tags": ["social", "pro"]
+  },
+
+  "SourceForge": {
+    "responseType": "status_code",
+    "url": "https://sourceforge.net/u/{}",
+    "confidence": 3,
+    "tags": ["tech", "dev"]
+  },
+
+  "Telegram": {
+    "url": "https://t.me/{}",
+    "scanMode": "deep",
+    "inputType": "username",
+    "responseType": "html",
+    "responseTarget": "meta",
+    "responseErrorMetaContent": "<meta property=\"og:description\" content=\"\">",
+    "confidence": 1,
+    "tags": ["social", "media"]
+  },
+
+  "Tiktok": {
+    "url": "https://www.tiktok.com/@{}",
+    "scanMode": "deep",
+    "inputType": "username",
+    "responseType": "html",
+    "responseTarget": "title",
+    "responsesSuccess": [
+      "this account is private",
+      "follow this account to see their videos",
+      "tiktok to discover new creators"
+    ],
+    "responsesError": [
+      "couldn't find this account",
+      "this account doesn't exist",
+      "page not found"
+    ],
+    "confidence": 2,
+    "tags": ["social", "media"]
+  },
+
+  "TryHackMe": {
+    "url": "https://tryhackme.com/p/{}",
+    "urlProbe": "https://tryhackme.com/api/user/exist/{}",
+    "inputType": "username",
+    "regexCheck": "^[a-zA-Z0-9.]{1,16}$",
+    "responseType": "message",
+    "responseTarget": "text",
+    "responsesSuccess": ["true"],
+    "responsesError": ["false"],
+    "confidence": 2,
+    "tags": ["tech", "hacking"]
+  },
+
+  "Twitch": {
+    "url": "https://www.twitch.tv/{}",
+    "scanMode": "deep",
+    "inputType": "username",
+    "responseType": "html",
+    "responseTarget": "text",
+    "responsesError": [
+      "Sorry. Unless you've got a time machine, that content is unavailable.",
+      "this channel is unavailable",
+      "page not found"
+    ],
+    "positiveSelectors": [
+      "meta[property='og:title']",
+      "button:has-text('Follow')"
+    ],
+    "confidence": 2,
+    "tags": ["social", "media", "culture"]
+  },
+
+  "X(Twitter)": {
+    "url": "https://x.com/{}",
+    "scanMode": "deep",
+    "inputType": "username",
+    "responseType": "html",
+    "responseTarget": "text",
+    "responsesError": [
+      "This account doesn’t exist",
+      "doesn’t exist",
+      "Try searching for another.",
+      "not found"
+    ],
+    "confidence": 2,
+    "tags": ["social", "media", "culture"]
+  },
+
+  "YouTube": {
+    "url": "https://www.youtube.com/@{}",
+    "inputType": "username",
+    "responseType": "status_code",
+    "confidence": 3,
+    "tags": ["social", "media", "culture"]
+  }
 }
