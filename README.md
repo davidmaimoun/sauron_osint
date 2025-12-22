@@ -102,17 +102,42 @@ Results show:
 
 **Example:**
 
-[USERNAME] Found 3 items!
+[USERNAME]  Found 46!
 
-Platform     Level     Message
----------------------------------------
-Twitter      high      https://twitter.com/johndoe
-GitHub       medium    https://github.com/johndoe
-Discord      retry     The resource is being rate limited
+Platform                  Level         Message
+-------------------      -----------   ----------------------------------------
+1.  About.me              high         https://about.me/johndoe
+2.  Apple developer       high         https://developer.apple.com/forums/profile/johndoe
+3.  Apple discussions     high         https://discussions.apple.com/profile/johndoe
+4.  Behance               high         https://www.behance.net/johndoe
+5.  Bluesky               high         https://bsky.app/profile/johndoe.bsky.social
+6.  Buymeacoffee          high         https://www.buymeacoffee.com/johndoe
+....
+....
+46. X(twitter)            medium       https://x.com/johndoe
+----------------------------------------------------------------------------
+
+[x] 11 not Found:
+   ** BitBucket ** Bugcrowd ** Carrd ** Gravatar ** HackTheBox ** PentesterLab ** Root-Me ** RubyGems ** Telegram ** YesWeHack ** YouTube
 
 
-Logs are saved automatically under:  
-`logs/sauron_YYYYMMDD_HHMMSS.txt`
+[PROFILING]
+
+Profile analysis of the ring bearer : johndoe 
+
+ ██████████░░░░░░░░░░  50% → Tech
+ ███████░░░░░░░░░░░░░  39% → Social / Media
+ ░░░░░░░░░░░░░░░░░░░░   4% → Hacking
+ ░░░░░░░░░░░░░░░░░░░░   4% → Professional
+ ░░░░░░░░░░░░░░░░░░░░   3% → Competitive
+
+[Sauron verdict]
+
+- 🧠  Strong technical inclination — structured, methodical, and quietly efficient.
+- 👥  Moderate social activity — present in the world, but not consumed by it.
+- 🔍  Minor hacking traces — watches the Eye, but does not serve it.
+- 🗃️   Minimal professional footprint — walks outside the established realms.
+
 
 ### 🧠 Confidence Levels
 
