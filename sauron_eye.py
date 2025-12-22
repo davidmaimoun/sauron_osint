@@ -4,6 +4,7 @@ import argparse
 import json
 import datetime
 import os
+import re
 import random
 from collections import Counter
 
@@ -176,7 +177,10 @@ def log(msg: str):
 def out(msg: str, color: str = "", bold: bool = False):
     style = Colors.BOLD if bold else ""
     print(f"{style}{color}{msg}{Colors.RESET}")
-    log(msg)
+    
+    clean_msg = re.sub(r'\x1b\[[0-9;]*m', '', msg)
+    log(clean_msg + "\n")
+   
 
 
 # ================= PRINT =================
@@ -223,8 +227,8 @@ def out_results(results: dict):
                 url_width = 40
 
                 # Header
-                print(f"{ 'Platform'.ljust(platform_width)}       {'Level'.ljust(level_width)}   Message")
-                print(f"{'-'*platform_width}      {'-'*level_width}   {'-'*url_width}")
+                out(f"{ 'Platform'.ljust(platform_width)}       {'Level'.ljust(level_width)}   Message")
+                out(f"{'-'*platform_width}      {'-'*level_width}   {'-'*url_width}")
 
                 # Rows
                 rows_count = 0
@@ -244,9 +248,9 @@ def out_results(results: dict):
 
                     url = v[KEY_MESSAGE]
                     
-                    print(f"{rows_count_text} {platform}   {level_color}  {Colors.BLUE}{url}{Colors.RESET}")
+                    out(f"{rows_count_text} {platform}   {level_color}  {Colors.BLUE}{url}{Colors.RESET}")
                 
-                print(f"{'-'*platform_width}---{'-'*level_width}---{'-'*url_width}\n")
+                out(f"{'-'*platform_width}---{'-'*level_width}---{'-'*url_width}\n")
             
 def out_level_color(level: str):
     if level == Level.HIGH:
@@ -444,7 +448,6 @@ def match_response(input_str: str, patterns: list[str], ) -> bool:
 
     return False
 
-
 def json_to_text(data) -> str:
     """
     Flatten any JSON (dict / list) into a searchable text string.
@@ -566,7 +569,6 @@ def analyze_meta(
     exit(get_dev_error_response("responseMeta<Success/Error>Content", site_name))
 
 
-
 # ================= LOAD SITES =================
 def load_data(data, input_type: str | None = None) -> dict:
     """
@@ -597,6 +599,9 @@ async def fetch(site_cfg, url, payload=None, deep=False, timeout=15000):
     # headers = site_cfg.get("headers", {'User-Agent': 'Mozilla/5.0'})
     headers = build_headers(site_cfg)
 
+    # It ensures the User-Agent header is properly normalized to prevent malformed headers that can trigger 403 or bot-detection blocks
+    # if "User-Agent" in headers:
+    #     headers["User-Agent"] = " ".join(headers["User-Agent"].split())
     
     # ===== DEEP (Playwright) =====
     if deep:
@@ -767,7 +772,6 @@ async def scan(data, input_type, input_val, deep=False):
 async def generate_and_scan(data, username,deep=False):
     results = {}
     
-   
     out(f"[>>>] The Eye turns its gaze upon {Colors.BLUE}{username}{Colors.RESET}, scanning the digital lands…")
     results["username"] = await scan(data, 'username', username, deep=deep)
     
