@@ -22,14 +22,14 @@ Inspired by the architecture and philosophy of **Sherlock**, Sauron uses a **JSO
 ### 🔁 OSINT Pivoting
 
 
-Starting from a known username on a single platform (for example a profile you encountered or interacted with), Sauron helps identify other **public accounts using the same username** across different services.
+Starting from a known username on a single platform (for example a profile you encountered or interacted with), Sauron Eye helps identify other **public accounts using the same username** across different services.
 
 This allows analysts to:
 - Map public digital presence
 - Correlate accounts across platforms
 - Understand online behavior patterns
 
-All checks are passive and rely only on publicly accessible information.
+**All checks are passive and rely only on publicly accessible information.**
 
 ---
 
