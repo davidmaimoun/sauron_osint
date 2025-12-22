@@ -7,15 +7,29 @@ Inspired by the architecture and philosophy of **Sherlock**, Sauron uses a **JSO
 > “One username to rule them all.”
 
 ---
-## ✨ Why Use Sauron Eye
+## ✨ About Sauron Eye
 
-- Designed for non-aggressive OSINT: does not exploit vulnerabilities or bypass protections
+### A non-aggressive OSINT 
+
+- Does not exploit vulnerabilities or bypass protections
 
 - Works fully legally, only analyzing publicly accessible data
 
 - Highly recommended: use --deep mode for JavaScript-heavy platforms
 
-- Only username scanning is fully supported; email and full name scanning are experimental
+- Only username scanning is fully supported
+
+### 🔁 OSINT Pivoting
+
+
+Starting from a known username on a single platform (for example a profile you encountered or interacted with), Sauron helps identify other **public accounts using the same username** across different services.
+
+This allows analysts to:
+- Map public digital presence
+- Correlate accounts across platforms
+- Understand online behavior patterns
+
+All checks are passive and rely only on publicly accessible information.
 
 ---
 
