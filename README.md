@@ -1,10 +1,21 @@
-# 👁️ Sauron OSINT
+# 👁️ Sauron Eye (OSINT)
 
-Sauron is an **OSINT username profiling tool** designed to discover a user's presence across **social media, tech platforms, and online services**.
+Sauron Eye is an **OSINT username profiling tool** designed to discover a user's presence across **social media, tech platforms, and online services**.
 
 Inspired by the architecture and philosophy of **Sherlock**, Sauron uses a **JSON-driven platform definition** to perform scalable and extensible username reconnaissance.
 
 > “One username to rule them all.”
+
+---
+## ✨ Why Use Sauron Eye
+
+- Designed for non-aggressive OSINT: does not exploit vulnerabilities or bypass protections
+
+- Works fully legally, only analyzing publicly accessible data
+
+- Highly recommended: use --deep mode for JavaScript-heavy platforms
+
+- Only username scanning is fully supported; email and full name scanning are experimental
 
 ---
 
@@ -44,7 +55,7 @@ This design makes Sauron **easy to maintain and extend** without touching core l
 - Suitable for platforms with static or JSON-based responses
 - Fast and lightweight
 
-### Deep Mode (`--deep`)
+### Deep Mode (`--deep`) - Highly recommended.
 - Uses **Playwright + Chromium**
 - Required for JavaScript-heavy platforms (e.g. Twitch, Facebook)
 - Renders pages like a real browser
@@ -69,21 +80,28 @@ playwright install chromium
 ```
 
 ## 🚀 Usage (For this version, only the username works well)
+
+**Highly recommended:** use --deep mode for non‑aggressive scanning of JavaScript-heavy platforms. Most results depend on it.
+
 Scan a username
 
-```python sauron.py --username johndoe```
-
-Scan using email (derive possible usernames)
-
-```python sauron.py --email john.doe@example.com```
-
-Scan using full name
-
-```python sauron.py --name "John Doe"```
+```python sauron_eye.py --username johndoe```
 
 Enable deep scan mode
 
-```python sauron.py --username johndoe --deep```
+```python sauron_eye.py --username johndoe --deep```
+
+
+
+Scan using email (derive possible usernames)
+
+```python sauron_eye.py --email john.doe@example.com```
+
+Scan using full name
+
+```python sauron_eye.py --name "John Doe"```
+
+
 
 ## 📊 Output
 
