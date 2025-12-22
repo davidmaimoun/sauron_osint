@@ -92,7 +92,8 @@ Only one external dependency is required for normal mode:
 pip install httpx
 ```
 
-👁️ Deep Mode Requirements (Highly Recommended)
+
+👁️ **Deep Mode Requirements (Highly Recommended)**
 
 Some platforms rely heavily on JavaScript and cannot be reliably detected using simple HTTP requests.
 
@@ -108,7 +109,7 @@ Then install the browser engine:
 playwright install chromium
 ```
 
-⚠️ Deep mode is highly recommended — a significant portion of results depend on it.
+⚠️ **Deep mode is highly recommended** — a significant portion of results depend on it.
 Without deep mode, many JavaScript-heavy platforms may return false negatives.
 
 ---
