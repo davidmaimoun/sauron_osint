@@ -79,45 +79,30 @@ For ```--deep``` mode:
 playwright install chromium
 ```
 
-## 🚀 Usage (For this version, only the username works well)
+## 🚀 Usage
 
 **Highly recommended:** use --deep mode for non‑aggressive scanning of JavaScript-heavy platforms. Most results depend on it.
 
 Scan a username
 
-```python sauron_eye.py --username johndoe```
+```python sauron_eye.py --username johndoe --data ./data.json```
 
 Enable deep scan mode
 
-```python sauron_eye.py --username johndoe --deep```
+```python sauron_eye.py --username johndoe --deep ./data.json```
 
-
-
-Scan using email (derive possible usernames)
-
-```python sauron_eye.py --email john.doe@example.com```
-
-Scan using full name
-
-```python sauron_eye.py --name "John Doe"```
-
-
-
+---
 ## 📊 Output
 
-Results are displayed with:
+Results show:
 
-Platform name
+- **Platform name**
+- **Confidence level**
+- **URL / message**
 
-Confidence level
+**Example:**
 
-URL or message
-
-Color-coded confidence
-
-Example:
-
-[USERNAME] Found 5 items!
+[USERNAME] Found 3 items!
 
 Platform     Level     Message
 ---------------------------------------
@@ -126,67 +111,55 @@ GitHub       medium    https://github.com/johndoe
 Discord      retry     The resource is being rate limited
 
 
-Logs are automatically saved under:
+Logs are saved automatically under:  
+`logs/sauron_YYYYMMDD_HHMMSS.txt`
 
-logs/sauron_YYYYMMDD_HHMMSS.txt
+### 🧠 Confidence Levels
 
-🧠 Confidence Levels
+- **high** – strong evidence of account existence  
+- **medium** – probable match  
+- **low** – weak indicator  
+- **retry** – rate-limited or temporary error  
 
-high – strong evidence of account existence
-
-medium – probable match
-
-low – weak indicator
-
-retry – rate-limited or temporary error
-
-⚠️ Disclaimer
+### ⚠️ Legal & Ethical Use
 
 This tool is intended for:
 
-Educational purposes
+- Educational purposes  
+- OSINT research  
+- Defensive security  
+- Personal investigations  
 
-OSINT research
+It does **NOT**:
 
-Defensive security
+- Use private or authenticated APIs  
+- Bypass platform protections  
+- Exploit vulnerabilities  
 
-Personal investigations
+You are responsible for your own usage.
 
-It does NOT:
+---
 
-Use private or authenticated APIs
+### 🧩 Inspiration & Roadmap
 
-Bypass protections
+- Inspired by Sherlock, extended with modern techniques  
+- Validated using real-world OSINT methods  
 
-Exploit vulnerabilities
+**Roadmap:**
 
-You are responsible for how you use this tool.
+- Add more platforms  
+- Output to JSON / CSV  
+- Username permutation engine  
+- Rate-limit awareness per platform  
+- Plugin system for custom checks  
 
-🧩 Inspiration
+---
 
-Inspired by Sherlock
+### 👤 Author
 
-Practiced and validated using real-world OSINT techniques
+David Maimoun – OSINT, Web Security, Offensive & Defensive Research  
 
-Designed with extensibility and safety in mind
+Contributions, issues, and suggestions are welcome.
 
-📌 Roadmap
 
-Add more platforms
-
-Output to JSON / CSV
-
-Username permutation engine
-
-Rate-limit awareness per platform
-
-Plugin system for custom checks
-
-👤 Author
-
-David Maimoun
-OSINT • Web Security • Offensive & Defensive Research
-
-Feel free to contribute, report issues, or suggest improvements.
-
-👁️ Sauron sees all.
+👁️ **Sauron Eye sees all.**
