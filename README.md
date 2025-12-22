@@ -79,19 +79,38 @@ This design makes Sauron **easy to maintain and extend** without touching core l
 
 ---
 
-## 📦 Requirements
+📦 Requirements & Installation
+🐍 Python
 
-### Python
-- Python **3.10+** recommended
+Python 3.10+ recommended
+(asyncio, argparse, json, datetime, os, random, collections are standard library)
 
-### Python dependencies
-```bash
+📚 Python dependencies
+
+Only one external dependency is required for normal mode:
+
 pip install httpx
-```
-For ```--deep``` mode:
-```pip install playwright
+
+👁️ Deep Mode Requirements (Highly Recommended)
+
+Some platforms rely heavily on JavaScript and cannot be reliably detected using simple HTTP requests.
+
+For these platforms, Sauron Eye uses Playwright to behave like a real browser.
+
+Install Playwright:
+
+pip install playwright
+
+
+Then install the browser engine:
+
 playwright install chromium
-```
+
+
+⚠️ Deep mode is highly recommended — a significant portion of results depend on it.
+Without deep mode, many JavaScript-heavy platforms may return false negatives.
+
+---
 
 ## 🚀 Usage
 
