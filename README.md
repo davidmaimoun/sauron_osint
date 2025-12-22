@@ -102,7 +102,7 @@ Results show:
 
 **Example:**
 
-[USERNAME] Found 46!
+**[USERNAME] Found 46!**
 
 ### Platforms Found
 
@@ -125,7 +125,7 @@ Results show:
 
 ---
 
-## [PROFILING]
+**[PROFILING]**
 
 **Profile analysis of the ring bearer:** `johndoe`
 
