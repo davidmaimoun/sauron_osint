@@ -1,103 +1,115 @@
-# 👁️ Sauron OSINT
+👁️ Sauron Eye (OSINT)
 
-Sauron is an **OSINT username profiling tool** designed to discover a user's presence across **social media, tech platforms, and online services**.
-
-Designed and implemented a modular OSINT username enumeration engine with adaptive detection logic, anti-bot awareness, confidence scoring, and browser-based fallback for protected platforms.
+Sauron Eye is an OSINT username profiling tool that quietly observes a user’s digital footprint across social media, tech platforms, and online services.
 
 Inspired by the architecture and philosophy of **Sherlock**, Sauron uses a **JSON-driven platform definition** to perform scalable and extensible username reconnaissance.
 
-> “One username to rule them all.”
+“One username to rule them all… and to quietly watch over the digital lands.”
 
----
 
-## ✨ Features
+✨ Why Use Sauron
 
-- 🔍 Search usernames across multiple platforms (social, media, tech, communities)
-- 🧠 Confidence-based results (high / medium / low / retry)
-- ⚙️ JSON-driven architecture (`data.json`) for easy extension
-- 🚀 Async & fast scanning using `httpx`
-- 👁️ **Deep mode** using Playwright for JavaScript-heavy platforms
-- 🧪 Safe testing logic (no private APIs, no authentication bypass)
-- 📊 Clean, colored CLI output with logging
+Designed for **non-aggressive OSINT**: does not exploit vulnerabilities or bypass protections
 
----
+Works fully legally, only analyzing publicly accessible data
 
-## 🏗 Architecture
+**Highly recommended**: use `--deep` for non-aggressif scan JavaScript-heavy platforms. Most of the results depend of that.
 
-Sauron is built around a **data-driven engine**:
+Only `--username` scanning is fully supported; email and full name scanning are experimental
 
-- Platforms are defined in a JSON file (`data.json`)
-- Each platform specifies:
-  - URL patterns
-  - Request method (GET / POST)
-  - Payload (if needed)
-  - Response success / error / retry patterns
-  - Scan mode (normal / deep)
-  - Confidence level
 
-This design makes Sauron **easy to maintain and extend** without touching core logic.
+🏹 Features
 
----
+🔍 Scan usernames across multiple platforms (social, media, tech, communities)
 
-## 🔬 Scan Modes
+🧠 Confidence-based scoring (high / medium / low / retry)
 
-### Normal Mode
-- Uses direct HTTP requests
-- Suitable for platforms with static or JSON-based responses
-- Fast and lightweight
+⚙️ JSON-driven (data.json) for easy extension
 
-### Deep Mode (`--deep`)
-- Uses **Playwright + Chromium**
-- Required for JavaScript-heavy platforms (e.g. Twitch, Facebook)
-- Renders pages like a real browser
-- Detects content via DOM, title, and selectors
+🚀 Async & fast scanning using httpx
 
-⚠️ Deep mode is intentionally slower to avoid abuse and enumeration.
+👁️ Deep mode using Playwright + Chromium for dynamic pages
 
----
+🧪 Safe testing logic: no private APIs, no authentication bypass
 
-## 📦 Requirements
+📊 Clean, colored CLI output with logging
 
-### Python
-- Python **3.10+** recommended
+🏗 Architecture
 
-### Python dependencies
-```bash
+Platforms defined in data.json with:
+
+URL patterns
+
+Request method (GET / POST)
+
+Response success / error / retry patterns
+
+Scan mode (normal / deep)
+
+Confidence level
+
+Core logic never needs to be changed for adding platforms
+
+🔬 Scan Modes
+Normal Mode
+
+Simple HTTP requests
+
+Works for static or JSON-based responses
+
+Fast, lightweight
+
+Deep Mode (--deep)
+
+Uses Playwright + Chromium
+
+Required for JavaScript-heavy platforms (e.g., Twitch, Instagram)
+
+Renders pages like a real browser
+
+Detects content via DOM, selectors, and titles
+
+Slightly slower by design to avoid aggressive scanning
+
+⚠️ Highly recommended for maximum accuracy.
+
+📦 Requirements
+Python
+
+Python 3.10+ recommended
+
+Dependencies
 pip install httpx
-```
-For ```--deep``` mode:
-```pip install playwright
+
+
+For deep mode:
+
+pip install playwright
 playwright install chromium
-```
 
-## 🚀 Usage (For this version, only the username works well)
-Scan a username
+🚀 Usage (Username Only)
 
-```python sauron.py --username johndoe```
+Scan a username:
 
-Scan using email (derive possible usernames)
+python sauron.py --username johndoe
 
-```python sauron.py --email john.doe@example.com```
 
-Scan using full name
+Enable deep scan mode:
 
-```python sauron.py --name "John Doe"```
+python sauron.py --username johndoe --deep
 
-Enable deep scan mode
 
-```python sauron.py --username johndoe --deep```
+(Email & full name scanning are under development and may require aggressive enumeration.)
 
-## 📊 Output
+📊 Output
 
-Results are displayed with:
+Results show:
 
 Platform name
 
 Confidence level
 
-URL or message
-
-Color-coded confidence
+URL / message
 
 Example:
 
@@ -110,11 +122,10 @@ GitHub       medium    https://github.com/johndoe
 Discord      retry     The resource is being rate limited
 
 
-Logs are automatically saved under:
-
+Logs saved automatically under:
 logs/sauron_YYYYMMDD_HHMMSS.txt
 
-🧠 Confidence Levels
+Confidence Levels
 
 high – strong evidence of account existence
 
@@ -124,7 +135,7 @@ low – weak indicator
 
 retry – rate-limited or temporary error
 
-⚠️ Disclaimer
+⚠️ Legal & Ethical Use
 
 This tool is intended for:
 
@@ -140,23 +151,21 @@ It does NOT:
 
 Use private or authenticated APIs
 
-Bypass protections
+Bypass platform protections
 
 Exploit vulnerabilities
 
-You are responsible for how you use this tool.
+You are responsible for your own usage.
 
-🧩 Inspiration
+🧩 Inspiration & Roadmap
 
-Inspired by Sherlock
+Inspired by Sherlock, extended with modern techniques
 
-Practiced and validated using real-world OSINT techniques
+Validated using real-world OSINT methods
 
-Designed with extensibility and safety in mind
+Roadmap:
 
-📌 Roadmap
-
-Add more platforms
+More platforms
 
 Output to JSON / CSV
 
@@ -168,9 +177,8 @@ Plugin system for custom checks
 
 👤 Author
 
-David Maimoun
-OSINT • Web Security • Offensive & Defensive Research
+David Maimoun – OSINT, Web Security, Offensive & Defensive Research
 
-Feel free to contribute, report issues, or suggest improvements.
+Contributions, issues, and suggestions are welcome.
 
 👁️ Sauron sees all.
