@@ -7,14 +7,6 @@
     "tags": ["pro", "social"]
   }, 
 
-  "AngelList": {
-    "inputType": "username",
-    "url": "https://angel.co/u/{}",
-    "responseType": "status_code",
-    "confidence": 3,
-    "tags": ["pro", "startup"]
-  },
-
   "Apple Developer": {
     "url": "https://developer.apple.com/forums/profile/{}",
     "urlMain": "https://developer.apple.com",
@@ -411,13 +403,6 @@
     "urlProbe": "https://www.reddit.com/user/{}/about.json",
     "scanMode": "deep",
     "inputType": "username",
-    "headers": {
-      "User-Agent": "Mozilla/5.0",
-      "Accept": "application/json",
-      "Accept-Language": "en-GB,en;q=0.9",
-      "Referer": "https://www.reddit.com/",
-       "Origin": "https://www.reddit.com"
-    },
     "responseType": "message",
     "responsesError": ["error","404"],
     "responsesRetry": ["your request has been blocked due to a network policy."],
@@ -540,9 +525,10 @@
     "tags": ["social", "media", "culture"]
   },
 
-  "Wellfound": {
+ "Wellfound": {
     "inputType": "username",
     "url": "https://wellfound.com/u/{}",
+    "scanMode": "deep",
     "responseType": "status_code",
     "confidence": 3,
     "tags": ["pro", "startup"]

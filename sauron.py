@@ -81,6 +81,69 @@ UA_POOL = [
     "Version/17.0 Safari/605.1.15",
 ]
 
+TAG_GROUPS = {
+    "technical": {
+        "tags": {"tech", "dev", "devops", "ai", "opensource"},
+        "label": "Tech",
+        "emoji": "💻"
+    },
+    "offensive": {
+        "tags": {"hacking", "security", "bugbounty"},
+        "label": "Hacking",
+        "emoji": "🔐"
+    },
+    "social": {
+        "tags": {"social", "media", "community", "culture", "art"},
+        "label": "Social / Media",
+        "emoji": "📱"
+    },
+    "professional": {
+        "tags": {"pro", "startup"},
+        "label": "Professional",
+        "emoji": "🏢"
+    },
+    "competitive": {
+        "tags": {"competitive"},
+        "label": "Competitive",
+        "emoji": "🏁"
+    }
+}
+
+VERDICT_LINES = {
+    "offensive": {
+        "dominant": "🔐  Dominant offensive mindset — breaks systems with the confidence of a seasoned Ring-forger.",
+        "strong":   "⚙️  Strong hacker instinct — sharp curiosity, not yet fully corrupted by the Dark Arts.",
+        "medium":   "🛠️  Some offensive knowledge — knows where to cut, still learning how deep.",
+        "low":      "🔍  Minor hacking traces — watches the Eye, but does not serve it."
+    },
+
+    "technical": {
+        "dominant": "💻  Builder mind — thinks in systems, forges logic like steel in the fires of industry.",
+        "strong":   "🧠  Strong technical inclination — structured, methodical, and quietly efficient.",
+        "medium":   "⚙️  Technically comfortable — competent, but not sworn to the craft.",
+        "low":      "📎  Uses technology as a tool — not as a calling."
+    },
+
+    "social": {
+        "dominant": "📱  Highly visible presence — speaks often, sometimes loudly, always noticed.",
+        "strong":   "🗣️  Strong online presence — enjoys being seen beyond the walls.",
+        "medium":   "👥  Moderate social activity — present in the world, but not consumed by it.",
+        "low":      "👤  Low social exposure — prefers the shadows over the crowd."
+    },
+
+    "professional": {
+        "dominant": "🏢  Strong professional identity — the corporate realm has claimed its champion.",
+        "strong":   "📊  Career-oriented presence — values order, progress, and measurable results.",
+        "medium":   "📁  Professional traces detected — likely functional rather than passionate.",
+        "low":      "🗃️   Minimal professional footprint — walks outside the established realms."
+    },
+
+    "ai": {
+        "strong": "🤖  AI-curious — experiments with modern sorcery, cautiously and with interest.",
+        "medium": "🧪  AI-aware — observes the new magic without fully embracing it."
+    }
+}
+
 
 def build_default_headers():
     """
@@ -117,6 +180,10 @@ def out(msg: str, color: str = "", bold: bool = False):
 
 
 # ================= PRINT =================
+def get_banner():
+    return """  
+［ S ］ ［ A ］ ［ U ］ ［ R ］ ［ O ］ ［ N ］ ［  ］ ［ E ］ ［ Y ］ ［ E ］    
+"""
 def get_disclaimer():
     return  (
         "[! Disclaimer]\n"
@@ -156,13 +223,18 @@ def out_results(results: dict):
                 url_width = 40
 
                 # Header
-                print(f"{ 'Platform'.ljust(platform_width)}   {'Level'.ljust(level_width)}  Message")
-                print(f"{'-'*platform_width}  {'-'*level_width}  {'-'*url_width}")
+                print(f"{ 'Platform'.ljust(platform_width)}       {'Level'.ljust(level_width)}   Message")
+                print(f"{'-'*platform_width}      {'-'*level_width}   {'-'*url_width}")
 
                 # Rows
+                rows_count = 0
                 for v in val:
+                    rows_count +=1
+
                     platform = v[KEY_PLATFORM].capitalize().ljust(platform_width)
                     level_text = str(v[KEY_LEVEL]).ljust(level_width)
+                    rows_count_text = f"{str(rows_count)}.".ljust(3)
+
                     if v[KEY_LEVEL] == Level.HIGH:
                         level_color = f"{Colors.BOLD}{Colors.GREEN}{level_text}{Colors.RESET}"
                     elif v[KEY_LEVEL] == Level.MEDIUM:
@@ -171,7 +243,8 @@ def out_results(results: dict):
                         level_color = f"{Colors.BOLD}{Colors.CYAN}{level_text}{Colors.RESET}"
 
                     url = v[KEY_MESSAGE]
-                    print(f"{platform}   {level_color}  {Colors.BLUE}{url}{Colors.RESET}")
+                    
+                    print(f"{rows_count_text} {platform}   {level_color}  {Colors.BLUE}{url}{Colors.RESET}")
                 
                 print(f"{'-'*platform_width}---{'-'*level_width}---{'-'*url_width}\n")
             
@@ -183,77 +256,98 @@ def out_level_color(level: str):
     else:
         return f'{Colors.BOLD}{Colors.CYAN}{Level.LOW}{Colors.RESET}'
 
-def out_profile_from_results(results: dict):
-    """
-    Generate and print a sarcastic Sauron-style digital profile
-    from results dict containing lists under keys like 'username' or 'name'.
-    Fractions are shown as counts/total rather than percentages.
-    """
+def out_profile_from_results(results: dict, username):
     if not results:
         out("No digital presence detected. Even my Eye cannot find you.", Colors.YELLOW)
         return
 
-    # Collect all tags from all lists in the dict
+    def percent_bar(percent, width=20):
+        filled = int(width * percent / 100)
+        return "█" * filled + "░" * (width - filled)
+
+    # Collect tags
     all_tags = []
-    for key, entries in results.items():
-        if not entries:
-            continue
-        for entry in entries:
-            all_tags.extend(entry.get("tags", []))
+    for entries in results.values():
+        if entries:
+            for entry in entries:
+                all_tags.extend(entry.get("tags", []))
 
     total = len(all_tags)
     if total == 0:
         out("No meaningful digital footprint… Orcs would say you're invisible.", Colors.YELLOW)
         return
 
-    # Count tags
     counter = Counter(all_tags)
 
-    out(f"\n\n{Colors.BLUE}[{"Profiling".upper()}]\n\nDigital profile analysis of the specimen (total tags: {total})\n", Colors.BLUE, bold=True)
+    # ---- GROUP COUNTS ----
+    group_counts = {}
+    for group, data in TAG_GROUPS.items():
+        count = sum(counter.get(tag, 0) for tag in data["tags"])
+        if count > 0:
+            group_counts[group] = count
 
-    # Print distribution as count/total
-    for tag, count in counter.items():
-        out(f" - {tag.capitalize()}: {count}/{total}")
+    # Normalize to 100%
+    group_percent = {
+        g: round((c / total) * 100)
+        for g, c in group_counts.items()
+    }
+
+    # Fix rounding drift (force 100%)
+    drift = 100 - sum(group_percent.values())
+    if drift != 0:
+        biggest = max(group_percent, key=group_percent.get)
+        group_percent[biggest] += drift
 
     # Sort by dominance
-    ordered = sorted(counter.items(), key=lambda x: x[1], reverse=True)
-    dominant, dom_count = ordered[0]
-    secondary = ordered[1][0] if len(ordered) > 1 else None
+    ordered = sorted(group_percent.items(), key=lambda x: x[1], reverse=True)
 
+    # ---- OUTPUT ----
+    out(
+        f"\n\n{Colors.BLUE}[PROFILING]\n\n"
+        f"Profile analysis of the ring bearer : {username} \n",
+        Colors.BLUE,
+        bold=True
+    )
+
+    for group, percent in ordered:
+        meta = TAG_GROUPS[group]
+        bar = percent_bar(percent)
+        out(f" {bar} {percent:>3}% → {meta['label']}")
+
+    # ---- VERDICT ----
     fun_profile = []
+    levels = {
+        "dominant": [],
+        "strong": [],
+        "medium": [],
+        "low": []
+    }
 
-    # Sarcastic verdict
-    # Start with dominant
-    if dominant == "hacking":
-        fun_profile.append(f"🧠 {dom_count}/{total} hacking → Future master of systems… or just a nerd clicking everywhere.")
-    elif dominant == "tech":
-        fun_profile.append(f"💻 {dom_count}/{total} tech → Obsessed with logic… pathetic yet strangely useful.")
-    elif dominant == "social":
-        fun_profile.append(f"📱 {dom_count}/{total} social → Active online, or so it seems…")
+    for group, percent in ordered:
+        lvl = strength_level(percent)  # dominant / fort / medium / bas
+        if lvl == "dominant":
+            levels["dominant"].append(group)
+        elif lvl == "fort":
+            levels["strong"].append(group)
+        elif lvl == "medium":
+            levels["medium"].append(group)
+        elif lvl == "bas":
+            levels["low"].append(group)
 
-    if secondary:
-        if secondary in ("tech", "hacking"):
-            fun_profile.append("⚙️ Secondary technical interest: precision in destruction and tinkering.")
-        elif secondary == "media":
-            fun_profile.append("🎥 Fascination with content: even Sauron's Eye would be jealous.")
-        elif secondary == "pro":
-            fun_profile.append("🏢 Likely professional use: enslaved to work, alas.")
-
-    # Surprise if media or social are very low
-    if counter.get("social", 0) / total < 0.2 or counter.get("media", 0) / total < 0.2:
-        fun_profile.append("😮 Low social/media activity… do you sure the specimen is really a hobbit?")
-
-    # Nuances
-    if counter.get("hacking", 0) / total > 0.4:
-        fun_profile.append("🔐 'Offensive-thinking' mindset: testing limits is your sport, mortal.")
-    if counter.get("ai", 0) / total > 0.15:
-        fun_profile.append("🤖 Curious about AI: apprentice sorcerer of new technologies.")
+    # Build verdict lines
+    for level_name, groups in levels.items():
+        for group in groups:
+            line = VERDICT_LINES.get(group, {}).get(level_name)
+            if line:
+                fun_profile.append(line)
 
     # Print verdict
     if fun_profile:
-        out("\nVerdict:", Colors.BLUE, bold=True)
+        out("\n[Sauron verdict]\n", Colors.BLUE, bold=True)
         for line in fun_profile:
-            out(f"   {line}")
+            out(f"  {line}")
+
+
 
 # ================= UTILITIES =================    
 def test_response(res):
@@ -261,14 +355,37 @@ def test_response(res):
             if k != "text":
                 print(k,v)
                 
-def derive_usernames(email: str):
-    local = email.split("@")[0]
-    candidates = [
-        local,
-        local.replace(".", ""),
-        local.replace("_", ""),
-    ]
-    return list(dict.fromkeys(candidates))
+def normalize_percentages(counter, total):
+    raw = {
+        tag: (count / total) * 100
+        for tag, count in counter.items()
+    }
+
+    rounded = {tag: int(val) for tag, val in raw.items()}
+    remainder = 100 - sum(rounded.values())
+
+    # Sort tags by largest decimal remainder
+    remainders = sorted(
+        raw.items(),
+        key=lambda x: x[1] - int(x[1]),
+        reverse=True
+    )
+
+    # Distribute remaining %
+    for tag, _ in remainders[:remainder]:
+        rounded[tag] += 1
+
+    return rounded
+
+def strength_level(percent):
+    if percent >= 75:
+        return "dominant"
+    elif percent >= 50:
+        return "fort"
+    elif percent >= 30:
+        return "medium"
+    else:
+        return "bas"
 
 def generate_username(name: str):
     return name.replace(" ", "").lower()
@@ -385,6 +502,71 @@ def is_binary_garbage(text: str) -> bool:
 
     return ratio > 0.3
 
+def success_response(site_name, username, url_display, conf, tags):
+    return {
+        "platform": site_name,
+        "username": username,
+        "message": url_display,
+        "level": get_confidence_level(conf),
+        "confidence": conf,
+        "tags": tags
+    }
+
+
+def retry_response(site_name, username, message="retry"):
+    return {
+        "platform": site_name,
+        "username": username,
+        "message": message,
+        "level": "retry",
+        "confidence": -1,
+        "tags": []
+    }
+
+
+def forbidden_response(site_name, username, tags):
+    return {
+        "platform": site_name,
+        "username": username,
+        "message": (
+            "access forbidden : retry later - might indicate that the user exists — or blocked by anti-bot protection."
+        ),
+        "level": "forbidden",
+        "confidence": 1,
+        "tags": tags
+    }
+
+def get_target(response, response_target):
+    if response_target == "title":
+        return response.get("title", "")
+    return response.get("text", "")
+
+def analyze_meta(
+    text,
+    site_name,
+    username,
+    url_display,
+    conf,
+    tags,
+    error_meta,
+    success_meta
+):
+    text = text[:10000]
+
+    if error_meta:
+        return None if error_meta in text else success_response(
+            site_name, username, url_display, conf, tags
+        )
+
+    if success_meta:
+        return success_response(
+            site_name, username, url_display, conf, tags
+        ) if success_meta in text else None
+
+    exit(get_dev_error_response("responseMeta<Success/Error>Content", site_name))
+
+
+
 # ================= LOAD SITES =================
 def load_data(data, input_type: str | None = None) -> dict:
     """
@@ -478,135 +660,59 @@ async def fetch(site_cfg, url, payload=None, deep=False, timeout=15000):
         }
 
 def analyze_response(site_name, site_cfg, username, url_display, response, conf):
-    response_type = site_cfg.get("responseType", None)
-    response_target = site_cfg.get("responseTarget", None)
-    response_error_meta_content = site_cfg.get("responseErrorMetaContent", None)
-    response_success_meta_content = site_cfg.get("responseSuccessMetaContent", None)
-    responses_error = site_cfg.get("responsesError", [])
-    responses_success = site_cfg.get("responsesSuccess", [])
-    responses_retry = site_cfg.get("responsesRetry", [])
+    response_type = site_cfg.get("responseType")
+    response_target = site_cfg.get("responseTarget")
+    tags = site_cfg.get("tags", [])
 
-    if not response_type: 
-        exit(get_dev_error_response('responseType',site_name))
-    if response_type == 'html' and not response_target:
-        exit(get_dev_error_response('responseTarget',site_name))
+    if not response_type:
+        exit(get_dev_error_response("responseType", site_name))
+    if response_type == "html" and not response_target:
+        exit(get_dev_error_response("responseTarget", site_name))
 
-    status = map_status_code(response["status"])
+    # ===== STATUS ONLY =====
+    if response_type == "status_code":
+        status = map_status_code(response["status"])
 
-    # ===== STATUS HANDLING =====
-    # Check if responseType status_code, or also like codepen, need a deep html
-    if response_type == 'status_code':
-        print(status)
         if status == Status.GOOD:
-            return  {
-                "platform": site_name,
-                "username": username,
-                "message": url_display,
-                "level": get_confidence_level(conf),
-                "confidence": conf,
-                "tags": site_cfg.get("tags", [])
-            }
-        
-        elif status == Status.FORBIDDEN:
-            return {
-                "platform": site_name,
-                "username": username,
-                "message": "access forbidden - this may indicate that the user exists - or blocked by anti-bot protection",
-                "level": "forbidden",
-                "confidence": 1,
-                "tags": site_cfg.get("tags", [])
-        }
-    
-        elif status == Status.BAD:
-            return None
-    
-   
+            return success_response(site_name, username, url_display, conf, tags)
+        if status == Status.FORBIDDEN:
+            return forbidden_response(site_name, username, tags)
+        return None
+
     # ===== HTML / MESSAGE =====
-    if response_type in ("html", "message"):
-        text = response["text"]
-        title = response["title"]
+    text = response.get("text", "")
+    # test_response(response)
+    if is_binary_garbage(text):
+        return retry_response(site_name, username, "blocked by anti-bot protection")
 
-        test_response(response)
-        print(text[:5000])
-        if is_binary_garbage(text):
-            return {
-                "platform": site_name,
-                "username": username,
-                "message": "blocked by anti-bot protection",
-                "level": "retry",
-                "confidence": -1,
-                "tags": []
-            }
+    # META MODE
+    if response_target == "meta":
+        return analyze_meta(
+            text=text,
+            site_name=site_name,
+            username=username,
+            url_display=url_display,
+            conf=conf,
+            tags=tags,
+            error_meta=site_cfg.get("responseErrorMetaContent"),
+            success_meta=site_cfg.get("responseSuccessMetaContent"),
+        )
 
-                
-        if response_target == "meta":
-            # Ex case of telegram => check meta <meta property=\"og:description\"...
-            # Need to have only one tyoe of response, error or success (not both)
-            text_truncated = text[:10000]
-            if response_error_meta_content:
-                if response_error_meta_content in text_truncated:
-                    return None
-                else:
-                    return {
-                        "platform": site_name,
-                        "username": username,
-                        "message": url_display,
-                        "level": get_confidence_level(conf),
-                        "confidence": conf,
-                        "tags": site_cfg.get("tags", [])
-                    } 
-            elif response_success_meta_content:
-                if response_success_meta_content in text_truncated:
-                    return {
-                            "platform": site_name,
-                            "username": username,
-                            "message": url_display,
-                            "level": get_confidence_level(conf),
-                            "confidence": conf,
-                            "tags": site_cfg.get("tags", [])
-                        }
-                else:
-                    return None
-            else:
-                get_dev_error_response("reponseMeta<Success/Error>Content", site_name)
+    # TEXT / TITLE MODE
+    target = get_target(response, response_target)
 
-        else:
-            target = text if not response_target or response_target == "text" else title
+    if match_response(target, site_cfg.get("responsesRetry", [])):
+        msg = extract_retry_message(target, site_cfg["responsesRetry"])
+        return retry_response(site_name, username, msg or "retry")
 
-        
-   
-        if responses_retry and match_response(target, responses_retry):
-            return {
-                "platform": site_name,
-                "username": username,
-                "message": extract_retry_message(target, responses_retry) or "retry",
-                "level": "retry",
-                "confidence": -1,
-                "tags": []
-            }
+    if match_response(target, site_cfg.get("responsesSuccess", [])):
+        return success_response(site_name, username, url_display, conf, tags)
 
-        if responses_success and match_response(target, responses_success):
-            return {
-                "platform": site_name,
-                "username": username,
-                "message": url_display,
-                "level": get_confidence_level(conf),
-                "confidence": conf,
-                "tags": site_cfg.get("tags", [])
-            }
-        
-        elif responses_error and match_response(target, responses_error):
-            return None
-        
-        
-    return {
-                "platform": site_name,
-                "username": username,
-                "message": url_display,
-                "level": get_confidence_level(conf),
-                "confidence": conf,
-                "tags": site_cfg.get("tags", [])
-            }
+    if match_response(target, site_cfg.get("responsesError", [])):
+        return None
+
+    # FALLBACK → optimistic success
+    return success_response(site_name, username, url_display, conf, tags)
 
 async def check_site(site_name, site_cfg, username=None, name=None, deep=False):
     conf = site_cfg.get("confidence", 1)
@@ -665,17 +771,18 @@ async def generate_and_scan(data, username=None, email=None, name=None,deep=Fals
     results = {}
     
     if username:
-        out(f"[>>>] Scanning the web for the username: {Colors.BLUE}{username}{Colors.RESET}")
+        out(f"[>>>] The Eye turns its gaze upon {Colors.BLUE}{username}{Colors.RESET}, scanning the digital lands…")
         results["username"] = await scan(data, 'username', username, deep=deep)
     
     if name:
-        out(f"[>>>] Scanning the web for the name: {Colors.BLUE}{name}{Colors.RESET}")
+        out(f"[>>>] The Eye turns its gaze upon {Colors.BLUE}{name}{Colors.RESET}, scanning the digital lands…")
         results["name"] = await scan(data, 'name', name, deep=deep)
     return results
 
 
-async def run_scan(data, username=None, email=None, name=None, deep=False):
-    out("\n👁️  SAURON EYE STARTED\n", Colors.BOLD)
+async def run_scan(data, username, email=None, name=None, deep=False):
+    print(get_banner())
+    out("\n👁️  The Great Eye opens, seeking hidden traces.\n", Colors.BOLD)
     if deep:
         out(get_disclaimer(),Colors.YELLOW,)
 
@@ -693,9 +800,9 @@ async def run_scan(data, username=None, email=None, name=None, deep=False):
         out(f"\n{Colors.GREEN}[+]  Your user is present in all platforms!\n", bold=True)
 
 
-    out_profile_from_results(results)
+    out_profile_from_results(results, username)
 
-    out("\n👁️  SAURON EYE DONE\n", Colors.BOLD)
+    out("\n👁️  Sauron Eye closes, secrets recorded.\n", Colors.BOLD)
 
 
 # ================= ARGUMENTS =================
