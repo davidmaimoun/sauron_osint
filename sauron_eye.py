@@ -597,9 +597,6 @@ async def fetch(site_cfg, url, payload=None, deep=False, timeout=15000):
     # headers = site_cfg.get("headers", {'User-Agent': 'Mozilla/5.0'})
     headers = build_headers(site_cfg)
 
-    # It ensures the User-Agent header is properly normalized to prevent malformed headers that can trigger 403 or bot-detection blocks
-    # if "User-Agent" in headers:
-    #     headers["User-Agent"] = " ".join(headers["User-Agent"].split())
     
     # ===== DEEP (Playwright) =====
     if deep:
@@ -757,36 +754,33 @@ async def check_site(site_name, site_cfg, username=None, name=None, deep=False):
 # =================  SCAN  ====================
 async def scan(data, input_type, input_val, deep=False):
     sites = load_data(data, input_type)
-    if input_type == "username":
+    if not input_type or input_type == "username":
         tasks = [check_site(site, cfg, username=input_val, name=None, deep=deep) for site, cfg in sites.items()]
-    elif input_type == "name":
-        tasks = [check_site(site, cfg, username=None, name=input_val, deep=deep) for site, cfg in sites.items()]
+
+    # TODO: name, email
 
     results = await asyncio.gather(*tasks)
 
     return [r for r in results if r]
 
 
-async def generate_and_scan(data, username=None, email=None, name=None,deep=False):
+async def generate_and_scan(data, username,deep=False):
     results = {}
     
-    if username:
-        out(f"[>>>] The Eye turns its gaze upon {Colors.BLUE}{username}{Colors.RESET}, scanning the digital lands…")
-        results["username"] = await scan(data, 'username', username, deep=deep)
+   
+    out(f"[>>>] The Eye turns its gaze upon {Colors.BLUE}{username}{Colors.RESET}, scanning the digital lands…")
+    results["username"] = await scan(data, 'username', username, deep=deep)
     
-    if name:
-        out(f"[>>>] The Eye turns its gaze upon {Colors.BLUE}{name}{Colors.RESET}, scanning the digital lands…")
-        results["name"] = await scan(data, 'name', name, deep=deep)
     return results
 
 
-async def run_scan(data, username, email=None, name=None, deep=False):
+async def run_scan(data, username, deep=False):
     print(get_banner())
-    out("\n👁️  The Great Eye opens, seeking hidden traces.\n", Colors.BOLD)
+    out("\n👁️  The Great Eye opens, scanning the digital realms.\n", Colors.BOLD)
     if deep:
         out(get_disclaimer(),Colors.YELLOW,)
 
-    results = await generate_and_scan(data, username=username, email=email, name=name, deep=deep)
+    results = await generate_and_scan(data, username=username, deep=deep)
     
     out_results(results)
 
@@ -809,26 +803,24 @@ async def run_scan(data, username, email=None, name=None, deep=False):
 def main():
     parser = argparse.ArgumentParser(description="Sauron Eye OSINT Scanner")
     parser.add_argument("--data", required=True, default=DATA_JSON, help="By default, ./data.json")
-    parser.add_argument("--username", type=str, help="Username to scan")
-    parser.add_argument("--email", type=str, help="Email to scan")
-    parser.add_argument("--name", type=str, help="ex: \"Jonh Doe\"")
+    parser.add_argument("--username", required=True, type=str, help="Username to scan")
+    # parser.add_argument("--email", type=str, help="Email to scan")
+    # parser.add_argument("--name", type=str, help="ex: \"Jonh Doe\"")
     parser.add_argument("--deep", action="store_true", help="Enable deep checks using Playwright + Chromium")
     args = parser.parse_args()
 
     username = args.username
-    email = args.email
-    name = args.name
     data = args.data
     deep = args.deep
 
     if not data:
         out(f"\n👁️  Little one, you need the data file path : --data.\n\n{get_help()}")
         return
-    if not username and not name and not email:
+    if not username:
         out(f"\n👁️  Little one, at least one arg is required : --username, --email, or --name.\n\n{get_help()}")
         return
     
-    asyncio.run(run_scan(username=username, email=email, name=name, data=data,deep=deep))
+    asyncio.run(run_scan(username=username, data=data,deep=deep))
 
 if __name__ == "__main__":
     main()
