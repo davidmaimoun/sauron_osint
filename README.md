@@ -130,9 +130,13 @@ Results show:
 **Profile analysis of the ring bearer:** `johndoe`
 
 ██████████░░░░░░░░░░ 50% → Tech
+
 ███████░░░░░░░░░░░░░ 39% → Social / Media
+
 ░░░░░░░░░░░░░░░░░░░░ 4% → Hacking
+
 ░░░░░░░░░░░░░░░░░░░░ 4% → Professional
+
 ░░░░░░░░░░░░░░░░░░░░ 3% → Competitive
 
 
