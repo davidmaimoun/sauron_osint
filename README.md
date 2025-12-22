@@ -88,8 +88,9 @@ Python 3.10+ recommended
 📚 Python dependencies
 
 Only one external dependency is required for normal mode:
-
+```
 pip install httpx
+```
 
 👁️ Deep Mode Requirements (Highly Recommended)
 
@@ -98,14 +99,14 @@ Some platforms rely heavily on JavaScript and cannot be reliably detected using 
 For these platforms, Sauron Eye uses Playwright to behave like a real browser.
 
 Install Playwright:
-
+```
 pip install playwright
-
+```
 
 Then install the browser engine:
-
+```
 playwright install chromium
-
+```
 
 ⚠️ Deep mode is highly recommended — a significant portion of results depend on it.
 Without deep mode, many JavaScript-heavy platforms may return false negatives.
